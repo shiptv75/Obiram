@@ -15,6 +15,7 @@ const LS_RESUME = "obiram_resume";
 
 let CHANNELS = [];      // flat list {id,name,group,logo,sources[]}
 let GROUPS = [];        // ordered unique group names
+let currentView = "home"; // 'home' | 'movies' | 'sportz'
 let currentChannel = null;
 let hls = null;
 let mpegtsPlayer = null;
@@ -170,10 +171,13 @@ function renderSidebar(counts) {
     $$(".cat-item").forEach((i) => i.classList.remove("active"));
     item.classList.add("active");
     const g = item.dataset.group;
+    if (currentView !== "home") switchView("home");
     if (g === "__all__") {
       renderCatSections(CHANNELS);
     } else {
-      document.getElementById("sec-" + slugify(g))?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setTimeout(() => {
+        document.getElementById("sec-" + slugify(g))?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
     }
     closeSidebarMobile();
   });
@@ -250,6 +254,88 @@ function renderCatSections(list) {
   });
 }
 
+// ---------- Zones: Movies / Sportz ----------
+function moviePoster(chan) {
+  const card = document.createElement("div");
+  card.className = "poster-card";
+  card.innerHTML = `
+    <div class="poster-thumb">
+      <span class="poster-badge"><span class="live-dot" style="width:5px;height:5px;"></span>LIVE</span>
+      ${
+        chan.logo
+          ? `<img src="${chan.logo}" alt="" loading="lazy" onerror="this.outerHTML='<div class=&quot;poster-fallback&quot;>${chan.name}</div>'">`
+          : `<div class="poster-fallback">${chan.name}</div>`
+      }
+    </div>
+    <div class="poster-name">${chan.name}</div>
+  `;
+  card.addEventListener("click", () => openPlayer(chan));
+  return card;
+}
+
+function sportCard(chan) {
+  const card = document.createElement("div");
+  card.className = "sport-card";
+  card.innerHTML = `
+    <img class="sport-logo" src="${chan.logo || ""}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+    <div class="sport-info">
+      <div class="sport-name">${chan.name}</div>
+      <div class="sport-live-tag"><span class="live-dot" style="width:6px;height:6px;"></span>LIVE NOW</div>
+    </div>
+  `;
+  card.addEventListener("click", () => openPlayer(chan));
+  return card;
+}
+
+function renderMoviesZone() {
+  const grid = $("#moviesGrid");
+  grid.innerHTML = "";
+  const movies = CHANNELS.filter((c) => /movie/i.test(c.group));
+  movies.forEach((c) => grid.appendChild(moviePoster(c)));
+  if (!movies.length) grid.innerHTML = `<p style="color:var(--muted);font-size:13px;">এখনো কোনো মুভি চ্যানেল পাওয়া যায়নি।</p>`;
+}
+
+function renderSportzZone() {
+  const grid = $("#sportzGrid");
+  grid.innerHTML = "";
+  const sports = CHANNELS.filter((c) => /sport|fifa|cricket/i.test(c.group));
+  sports.forEach((c) => grid.appendChild(sportCard(c)));
+  if (!sports.length) grid.innerHTML = `<p style="color:var(--muted);font-size:13px;">এখনো কোনো স্পোর্টস চ্যানেল পাওয়া যায়নি।</p>`;
+}
+
+function switchView(view) {
+  currentView = view;
+  $$(".zone-tab").forEach((t) => t.classList.toggle("active", t.dataset.view === view));
+
+  const homeEls = ["#resumeSection", "#favSection", "#catSections"];
+  $("#moviesZone").classList.toggle("hidden", view !== "movies");
+  $("#sportzZone").classList.toggle("hidden", view !== "sportz");
+  $("#emptyState").classList.add("hidden");
+
+  if (view === "home") {
+    $("#catSections").classList.remove("hidden");
+    renderResumeRow();
+    renderFavRow();
+    renderCatSections(CHANNELS);
+  } else {
+    homeEls.forEach((sel) => $(sel).classList.add("hidden"));
+    if (view === "movies") renderMoviesZone();
+    if (view === "sportz") renderSportzZone();
+  }
+
+  $("#searchInput").value = "";
+  $("#searchClear").classList.add("hidden");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function setupZoneNav() {
+  $("#zoneNav").addEventListener("click", (e) => {
+    const btn = e.target.closest(".zone-tab");
+    if (!btn) return;
+    switchView(btn.dataset.view);
+  });
+}
+
 // ---------- Favorites row ----------
 function renderFavRow() {
   const favIds = loadJSON(LS_FAV, []);
@@ -310,6 +396,15 @@ function setupSearch() {
   input.addEventListener("input", () => {
     const q = input.value.trim().toLowerCase();
     clearBtn.classList.toggle("hidden", !q);
+    if (q && currentView !== "home") {
+      currentView = "home";
+      $$(".zone-tab").forEach((t) => t.classList.toggle("active", t.dataset.view === "home"));
+      $("#moviesZone").classList.add("hidden");
+      $("#sportzZone").classList.add("hidden");
+      $("#catSections").classList.remove("hidden");
+      $("#resumeSection").classList.add("hidden");
+      $("#favSection").classList.add("hidden");
+    }
     if (!q) { renderCatSections(CHANNELS); return; }
     const filtered = CHANNELS.filter(
       (c) => c.name.toLowerCase().includes(q) || c.group.toLowerCase().includes(q)
@@ -530,6 +625,7 @@ function setupPlayerControls() {
 async function init() {
   setupSearch();
   setupSidebarToggle();
+  setupZoneNav();
   setupPlayerControls();
   tickClock();
   setInterval(tickClock, 30000);

@@ -139,6 +139,102 @@ a{ color: inherit; text-decoration: none; }
 .icon-btn.active{ color: var(--glow); border-color: var(--glow); }
 .only-mobile{ display:none; }
 
+/* ============ ZONE NAV ============ */
+.zone-nav{
+  position: sticky; top:63px; z-index:30;
+  display:flex; gap:8px; padding: 10px 20px;
+  background: rgba(10,5,16,0.65);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+  overflow-x:auto;
+}
+.zone-nav::-webkit-scrollbar{ height:0; }
+.zone-tab{
+  display:flex; align-items:center; gap:7px; flex-shrink:0;
+  padding: 8px 16px; border-radius: 999px;
+  font-size:13px; font-weight:600; color: var(--muted);
+  border: 1px solid var(--line); background: var(--surface);
+  transition: color .15s, border-color .15s, background .15s;
+}
+.zone-tab:hover{ color: var(--text); border-color: var(--sig); }
+.zone-tab.active{
+  color:#fff; border-color: transparent;
+  background: linear-gradient(120deg, var(--sig), var(--sig-2));
+  box-shadow: 0 6px 18px -8px rgba(164,54,160,.7);
+}
+
+/* ============ ZONE HERO ============ */
+.zone-section{ margin-bottom: 10px; }
+.zone-hero{
+  display:flex; align-items:center; gap:16px;
+  padding: 22px 24px; border-radius: var(--r-lg);
+  margin-bottom: 22px;
+  border: 1px solid var(--line);
+}
+.movies-hero{ background: linear-gradient(120deg, rgba(164,54,160,.28), rgba(23,11,34,.4)); }
+.sportz-hero{ background: linear-gradient(120deg, rgba(255,84,112,.22), rgba(23,11,34,.4)); }
+.zone-hero-icon{
+  width:52px; height:52px; border-radius: var(--r-md); flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; font-size:26px;
+  background: var(--surface-2); border:1px solid var(--line);
+}
+.zone-hero-title{ font-family: var(--font-display); font-weight:700; font-size:19px; margin-bottom:4px; }
+.zone-hero-sub{ font-size:12.5px; color: var(--muted); }
+
+/* ============ MOVIES ZONE — poster grid ============ */
+.poster-grid{
+  display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:16px;
+}
+.poster-card{
+  cursor:pointer; border-radius: var(--r-md); overflow:hidden;
+  border: 1px solid var(--line); background: var(--surface);
+  transition: transform .15s, border-color .15s, box-shadow .15s;
+}
+.poster-card:hover{
+  transform: translateY(-4px) scale(1.015);
+  border-color: var(--sig);
+  box-shadow: 0 14px 30px -14px rgba(164,54,160,.6);
+}
+.poster-thumb{
+  position:relative; aspect-ratio: 2/3; width:100%;
+  background: linear-gradient(160deg, var(--surface-2), var(--void-2));
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+}
+.poster-thumb img{ max-width:78%; max-height:60%; object-fit:contain; filter: drop-shadow(0 6px 16px rgba(0,0,0,.5)); }
+.poster-thumb .poster-fallback{ font-family: var(--font-display); font-weight:700; color: var(--muted); font-size:15px; text-align:center; padding: 0 10px; }
+.poster-badge{
+  position:absolute; top:9px; left:9px; display:flex; align-items:center; gap:4px;
+  background: rgba(10,5,16,.75); border:1px solid var(--glow); color: var(--glow);
+  font-family: var(--font-mono); font-size:9.5px; padding:3px 8px; border-radius:999px; letter-spacing:.5px;
+}
+.poster-name{ padding: 10px 10px 12px; font-size:12.5px; font-weight:600; text-align:center;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+
+/* ============ SPORTZ LIVE — grid ============ */
+.sport-grid{
+  display:grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap:14px;
+}
+.sport-card{
+  position:relative; cursor:pointer; border-radius: var(--r-md);
+  border: 1px solid var(--line); background: var(--surface);
+  padding: 16px 14px; display:flex; align-items:center; gap:12px;
+  transition: transform .15s, border-color .15s, box-shadow .15s;
+  overflow:hidden;
+}
+.sport-card::before{
+  content:""; position:absolute; left:0; top:0; bottom:0; width:3px;
+  background: linear-gradient(180deg, var(--danger), var(--gold));
+}
+.sport-card:hover{
+  transform: translateY(-3px);
+  border-color: var(--danger);
+  box-shadow: 0 12px 26px -14px rgba(255,84,112,.55);
+}
+.sport-logo{ width:44px; height:44px; object-fit:contain; flex-shrink:0; background: var(--surface-2); border-radius:8px; padding:4px; }
+.sport-info{ min-width:0; }
+.sport-name{ font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sport-live-tag{ display:flex; align-items:center; gap:5px; font-family: var(--font-mono); font-size:10px; color: var(--danger); margin-top:3px; }
+
 /* ============ LAYOUT ============ */
 .body-wrap{ display:flex; align-items:flex-start; }
 
@@ -338,4 +434,10 @@ a{ color: inherit; text-decoration: none; }
   .chan-card{ padding:10px 8px 9px; }
   .player-name{ max-width:36vw; }
   .live-clock{ display:none; }
+  .zone-nav{ top:57px; padding:8px 14px; }
+  .zone-hero{ padding:16px; gap:12px; }
+  .zone-hero-icon{ width:42px; height:42px; font-size:20px; }
+  .zone-hero-title{ font-size:16px; }
+  .poster-grid{ grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap:10px; }
+  .sport-grid{ grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:10px; }
 }

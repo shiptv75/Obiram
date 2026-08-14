@@ -54,6 +54,21 @@
     </div>
   </header>
 
+  <nav class="zone-nav" id="zoneNav">
+    <button class="zone-tab active" data-view="home">
+      <svg viewBox="0 0 24 24" width="16" height="16"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1v-9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+      হোম
+    </button>
+    <button class="zone-tab" data-view="movies">
+      <svg viewBox="0 0 24 24" width="16" height="16"><path d="M4 4h16v16H4V4z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 4v16M16 4v16M4 9h4M16 9h4M4 15h4M16 15h4" stroke="currentColor" stroke-width="1.6"/></svg>
+      Movies Zone
+    </button>
+    <button class="zone-tab" data-view="sportz">
+      <svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 3v6l5 3M6 6l3 3M18 6l-3 3M12 21v-3M4 12h3M17 12h3" stroke="currentColor" stroke-width="1.5"/></svg>
+      Sportz Live
+    </button>
+  </nav>
+
   <div class="body-wrap">
 
     <!-- Sidebar -->
@@ -87,6 +102,30 @@
 
       <!-- Grid by category -->
       <div id="catSections"></div>
+
+      <!-- Movies Zone -->
+      <section id="moviesZone" class="zone-section hidden">
+        <div class="zone-hero movies-hero">
+          <div class="zone-hero-icon">🎬</div>
+          <div>
+            <h1 class="zone-hero-title">Movies Zone</h1>
+            <p class="zone-hero-sub">নন-স্টপ বাংলা ও হিন্দি সিনেমা চ্যানেল, ২৪ ঘণ্টা লাইভ</p>
+          </div>
+        </div>
+        <div class="poster-grid" id="moviesGrid"></div>
+      </section>
+
+      <!-- Sportz Live -->
+      <section id="sportzZone" class="zone-section hidden">
+        <div class="zone-hero sportz-hero">
+          <div class="zone-hero-icon">🏆</div>
+          <div>
+            <h1 class="zone-hero-title">Sportz Live</h1>
+            <p class="zone-hero-sub">ক্রিকেট, ফুটবলসহ সব লাইভ স্পোর্টস চ্যানেল এক জায়গায়</p>
+          </div>
+        </div>
+        <div class="sport-grid" id="sportzGrid"></div>
+      </section>
 
       <div id="emptyState" class="empty-state hidden">
         <div class="empty-mark">📡</div>

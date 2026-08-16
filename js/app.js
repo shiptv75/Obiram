@@ -3,6 +3,8 @@
 // ============================================================
 
 const M3U_URL = "https://raw.githubusercontent.com/shiptv75/SHIPTV/main/playlist.m3u";
+const M3U_URL_2 = "https://raw.githubusercontent.com/ahan443/FAST-IPTV/refs/heads/main/z.m3u";
+const M3U_SOURCES = [M3U_URL, M3U_URL_2];
 const CORS_PROXIES = [
   (u) => u, // try direct first
   (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
@@ -83,14 +85,14 @@ function parseM3U(text) {
       if (pending && pending.sources.length) raw.push(pending);
 
       const nameMatch = line.match(/,(.*)$/);
-      const name = nameMatch ? nameMatch[1].trim() : "Unknown";
+      const name = (nameMatch ? nameMatch[1].trim() : "Unknown").normalize("NFKC");
       const logoMatch = line.match(/tvg-logo="([^"]*)"/);
       const groupMatch = line.match(/group-title="([^"]*)"/);
 
       pending = {
         name: name || "Unknown",
         logo: logoMatch ? logoMatch[1] : "",
-        group: groupMatch && groupMatch[1] ? groupMatch[1] : "অন্যান্য",
+        group: (groupMatch && groupMatch[1] ? groupMatch[1] : "অন্যান্য").normalize("NFKC"),
         sources: [],
       };
     } else if (line.startsWith("#")) {
@@ -120,19 +122,25 @@ function parseM3U(text) {
 }
 
 // ---------- Fetch playlist with proxy fallback ----------
-async function fetchPlaylist() {
+async function fetchOnePlaylist(url) {
   for (const wrap of CORS_PROXIES) {
     try {
-      const res = await fetch(wrap(M3U_URL), { cache: "no-store" });
+      const res = await fetch(wrap(url), { cache: "no-store" });
       if (!res.ok) throw new Error("bad status " + res.status);
       const text = await res.text();
-      if (text && text.includes("#EXTM3U")) return text;
-      if (text && text.includes("#EXTINF")) return text;
+      if (text && (text.includes("#EXTM3U") || text.includes("#EXTINF"))) return text;
     } catch (e) {
       continue;
     }
   }
-  throw new Error("প্লেলিস্ট লোড করা যায়নি");
+  return null; // this source failed, but others may still succeed
+}
+
+async function fetchPlaylist() {
+  const results = await Promise.all(M3U_SOURCES.map(fetchOnePlaylist));
+  const texts = results.filter(Boolean);
+  if (!texts.length) throw new Error("প্লেলিস্ট লোড করা যায়নি");
+  return texts.join("\n");
 }
 
 // ---------- Splash ----------

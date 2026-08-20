@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SHAMIM IPTV — 24/7 Entertainment</title>
+<title>Obiram TV — লাইভ বাংলা টিভি</title>
 <meta name="description" content="বাংলাদেশ ও ভারতের সব লাইভ টিভি চ্যানেল, খেলা, খবর ও সিনেমা এক জায়গায়।">
-<meta name="theme-color" content="#0a0510">
+<meta name="theme-color" content="#0d9e3f">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,9 +21,9 @@
     <span class="pulse-ring r1"></span>
     <span class="pulse-ring r2"></span>
     <span class="pulse-ring r3"></span>
-    <span class="splash-logo">S</span>
+    <span class="splash-logo">O</span>
   </div>
-  <div class="splash-word">SHAMIM <span>IPTV</span></div>
+  <div class="splash-word">OBIRAM <span>TV</span></div>
   <div class="splash-sub">চ্যানেল লিস্ট লোড হচ্ছে…</div>
   <div class="splash-bar"><div class="splash-bar-fill" id="splashFill"></div></div>
 </div>
@@ -34,14 +34,12 @@
   <!-- Header -->
   <header class="topbar">
     <div class="topbar-left">
-      <button id="menuToggle" class="icon-btn only-mobile" aria-label="মেনু">
-        <svg viewBox="0 0 24 24" width="22" height="22"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      </button>
       <div class="brand">
-        <span class="brand-mark">S</span>
-        <span class="brand-word">SHAMIM<span>IPTV</span></span>
+        <span class="brand-mark">O</span>
+        <span class="brand-word">OBIRAM<span>TV</span></span>
       </div>
     </div>
+
 
     <div class="topbar-search">
       <svg viewBox="0 0 24 24" width="18" height="18"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" fill="none"/><path d="M21 21l-3.8-3.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -54,36 +52,12 @@
     </div>
   </header>
 
-  <nav class="zone-nav" id="zoneNav">
-    <button class="zone-tab active" data-view="home">
-      <svg viewBox="0 0 24 24" width="16" height="16"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1v-9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
-      হোম
-    </button>
-    <button class="zone-tab" data-view="movies">
-      <svg viewBox="0 0 24 24" width="16" height="16"><path d="M4 4h16v16H4V4z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 4v16M16 4v16M4 9h4M16 9h4M4 15h4M16 15h4" stroke="currentColor" stroke-width="1.6"/></svg>
-      Movies Zone
-    </button>
-    <button class="zone-tab" data-view="sportz">
-      <svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 3v6l5 3M6 6l3 3M18 6l-3 3M12 21v-3M4 12h3M17 12h3" stroke="currentColor" stroke-width="1.5"/></svg>
-      Sportz Live
-    </button>
+  <!-- Category chip bar -->
+  <nav class="chip-bar" id="chipBar">
+    <!-- filled by JS -->
   </nav>
 
   <div class="body-wrap">
-
-    <!-- Sidebar -->
-    <aside id="sidebar" class="sidebar">
-      <nav class="cat-list" id="catList">
-        <!-- filled by JS -->
-      </nav>
-      <div class="sidebar-foot">
-        <a href="https://t.me/" target="_blank" rel="noopener" class="tg-link">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M21.9 3.4 2.6 11c-.9.35-.9 1.65.1 1.95l4.9 1.5 1.9 6c.25.75 1.2.95 1.75.35l2.65-2.9 5 3.7c.75.55 1.85.15 2.05-.75l3.4-15.6c.25-1.1-.85-2-1.85-1.85Z"/></svg>
-          <span>টেলিগ্রাম সাপোর্ট</span>
-        </a>
-      </div>
-    </aside>
-    <div id="sidebarOverlay" class="sidebar-overlay hidden"></div>
 
     <!-- Main -->
     <main class="main">
@@ -94,47 +68,50 @@
         <div class="row-scroll" id="resumeRow"></div>
       </section>
 
-      <!-- Favorites -->
-      <section id="favSection" class="row hidden">
-        <h2 class="row-title">প্রিয় চ্যানেল</h2>
-        <div class="row-scroll" id="favRow"></div>
-      </section>
-
-      <!-- Grid by category -->
-      <div id="catSections"></div>
-
-      <!-- Movies Zone -->
-      <section id="moviesZone" class="zone-section hidden">
-        <div class="zone-hero movies-hero">
-          <div class="zone-hero-icon">🎬</div>
-          <div>
-            <h1 class="zone-hero-title">Movies Zone</h1>
-            <p class="zone-hero-sub">নন-স্টপ বাংলা ও হিন্দি সিনেমা চ্যানেল, ২৪ ঘণ্টা লাইভ</p>
-          </div>
-        </div>
-        <div class="poster-grid" id="moviesGrid"></div>
-      </section>
-
-      <!-- Sportz Live -->
-      <section id="sportzZone" class="zone-section hidden">
-        <div class="zone-hero sportz-hero">
-          <div class="zone-hero-icon">🏆</div>
-          <div>
-            <h1 class="zone-hero-title">Sportz Live</h1>
-            <p class="zone-hero-sub">ক্রিকেট, ফুটবলসহ সব লাইভ স্পোর্টস চ্যানেল এক জায়গায়</p>
-          </div>
-        </div>
-        <div class="sport-grid" id="sportzGrid"></div>
-      </section>
+      <!-- Grid -->
+      <div class="grid" id="mainGrid"></div>
 
       <div id="emptyState" class="empty-state hidden">
         <div class="empty-mark">📡</div>
-        <p>কোনো চ্যানেল পাওয়া যায়নি</p>
+        <p id="emptyStateText">কোনো চ্যানেল পাওয়া যায়নি</p>
         <span>অন্য নামে খুঁজে দেখুন</span>
       </div>
     </main>
   </div>
 </div>
+
+<!-- ===== "চ্যানেল প্লে হচ্ছে না?" HELP DRAWER ===== -->
+<button id="helpFab" class="help-fab" title="চ্যানেল প্লে হচ্ছে না?">
+  <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 17v.01M12 14c0-2.5 2.5-2.5 2.5-5A2.5 2.5 0 0 0 12 6.5 2.5 2.5 0 0 0 9.5 9" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+</button>
+
+<div id="helpOverlay" class="help-overlay hidden">
+  <div class="help-sheet">
+    <div class="help-sheet-head">
+      <h3>📺 চ্যানেল প্লে হচ্ছে না?</h3>
+      <button id="helpClose" class="icon-btn" aria-label="বন্ধ করুন">✕</button>
+    </div>
+    <div class="help-sheet-body">
+      <p class="help-lead">সাধারণত এই কারণগুলোর জন্য চ্যানেল লোড হয় না:</p>
+      <ul class="help-list">
+        <li>স্ট্রিম সাময়িকভাবে ডাউন বা সোর্স চ্যানেলটি অফলাইনে আছে</li>
+        <li>ইন্টারনেট সংযোগ দুর্বল বা মাঝপথে বিচ্ছিন্ন হয়েছে</li>
+        <li>ব্রাউজারের পুরনো ক্যাশ সমস্যা তৈরি করছে</li>
+        <li>VPN/Proxy/Ad-blocker কিছু স্ট্রিম ব্লক করে দিচ্ছে</li>
+      </ul>
+      <p class="help-lead">✅ যা করে দেখতে পারো:</p>
+      <ul class="help-steps">
+        <li>ইন্টারনেট কানেকশন পরীক্ষা করো</li>
+        <li>পেজটা রিফ্রেশ/রিলোড করো</li>
+        <li>প্লেয়ারের সার্ভার-বাটন থেকে অন্য সার্ভার চেষ্টা করো (📡 আইকন)</li>
+        <li>সম্ভব হলে অন্য নেটওয়ার্কে (Wi-Fi/মোবাইল ডেটা) চেষ্টা করো</li>
+        <li>VPN/Ad-blocker চালু থাকলে সাময়িক বন্ধ রাখো</li>
+      </ul>
+      <div class="help-note">কয়েক মিনিট পর আবার চেষ্টা করলে বেশিরভাগ সমস্যা এমনিতেই ঠিক হয়ে যায়।</div>
+    </div>
+  </div>
+</div>
+
 
 <!-- ===== PLAYER OVERLAY (ported 1:1 from Shamim IPTV Blogger theme) ===== -->
 <div id="playerOverlay" class="player-overlay hidden">

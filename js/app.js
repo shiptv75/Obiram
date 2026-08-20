@@ -1,12 +1,18 @@
 // ============================================================
-// OBIRAM TV — app.js
+// OBIRAM TV — app.js (Updated with Vercel Proxy)
 // ============================================================
+
+// আপনার Vercel প্রক্সি লিংক
+const VERCEL_PROXY = "https://shiptv.vercel.app/api/proxy?url=";
 
 const M3U_URL = "https://raw.githubusercontent.com/shiptv75/SHIPTV/main/playlist.m3u";
 const M3U_URL_2 = "https://raw.githubusercontent.com/ahan443/FAST-IPTV/refs/heads/main/z.m3u";
 const M3U_SOURCES = [M3U_URL, M3U_URL_2];
+
+// প্রক্সি লিস্টের শীর্ষে আপনার Vercel প্রক্সি রাখা হয়েছে
 const CORS_PROXIES = [
   (u) => u, // try direct first
+  (u) => `${VERCEL_PROXY}${encodeURIComponent(u)}`, // Your Vercel Proxy
   (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
   (u) => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
   (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
@@ -67,11 +73,6 @@ function saveJSON(key, val) {
 }
 
 // ---------- M3U Parsing ----------
-// Handles two real-world patterns from live-updating playlists:
-//  1) one #EXTINF followed by several stacked URL lines (fallback servers)
-//  2) the same channel repeated as separate #EXTINF blocks, each with one URL
-// Both are merged into a single channel with a combined, de-duplicated
-// sources[] list so the player's server-fallback UI works either way.
 function parseM3U(text) {
   const lines = text.split(/\r?\n/);
   const raw = [];
@@ -104,7 +105,6 @@ function parseM3U(text) {
   }
   if (pending && pending.sources.length) raw.push(pending);
 
-  // merge duplicate channel entries (same name+group) into one, combining sources
   const merged = new Map();
   const order = [];
   raw.forEach((entry) => {
@@ -133,7 +133,7 @@ async function fetchOnePlaylist(url) {
       continue;
     }
   }
-  return null; // this source failed, but others may still succeed
+  return null;
 }
 
 async function fetchPlaylist() {
@@ -358,7 +358,7 @@ function setupSearch() {
   });
 }
 
-// ---------- Help drawer ("চ্যানেল প্লে হচ্ছে না?") ----------
+// ---------- Help drawer ----------
 function setupHelpDrawer() {
   const fab = $("#helpFab");
   const overlay = $("#helpOverlay");
@@ -377,9 +377,8 @@ function tickClock() {
   el.textContent = `${h}:${m}`;
 }
 
-// ================= PLAYER (ported 1:1 from Shamim IPTV Blogger theme) =================
+// ================= PLAYER =================
 
-// ---- entry point: open a channel ----
 function openPlayer(chan) {
   currentChannel = chan;
   activeChannelIndex = CHANNELS.findIndex((c) => c.id === chan.id);
@@ -389,7 +388,6 @@ function openPlayer(chan) {
   cvInitVideoEvents();
   playChannel(chan);
 
-  // on mobile the player pane sits above the grid — scroll it into view
   if (window.innerWidth <= 860) {
     $("#playerPane")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -403,7 +401,6 @@ function closePlayer() {
   currentChannel = null;
 }
 
-// ── same channel selected from grid/float-list/prev-next ──
 function playChannel(ch) {
   currentChannel = ch;
   activeChannelIndex = CHANNELS.findIndex((c) => c.id === ch.id);
@@ -423,7 +420,6 @@ function playChannel(ch) {
   cvLoadStreamSource(ch.sources[0]);
 }
 
-// ── server list is simply the channel's own merged sources[] ──
 function cvBuildServerListFromChannel(ch) {
   currentServerList = ch.sources.map((url, i) => ({ name: `Server ${i + 1}`, url }));
   currentServerIndex = 0;
@@ -466,7 +462,6 @@ document.addEventListener("click", (e) => {
   }
 });
 
-// ── TS vs HLS detection heuristic ──
 function isTsStream(url) {
   if (!url) return false;
   if (/\.m3u8(\?.*)?$/i.test(url)) return false;
@@ -489,7 +484,7 @@ function destroyExistingPlayers() {
   if (video) { video.removeAttribute("src"); video.load(); }
 }
 
-// ── reusable stream loader (channel switch & server switch both use this) ──
+// ── Vercel প্রক্সির মাধ্যমে চ্যানেল লিংক লোড করার ফাংশন ──
 function cvLoadStreamSource(rawUrl) {
   const video = $("#main-hybrid-video-node");
   if (!rawUrl || !video) return;
@@ -502,7 +497,12 @@ function cvLoadStreamSource(rawUrl) {
   cvShowLoader(true);
   cvInitVideoEvents();
 
-  const url = rawUrl.trim();
+  // আসল ইউআরএল-কে Vercel প্রক্সি ইউআরএল-এ রুপান্তর করা
+  let targetUrl = rawUrl.trim();
+  if (!targetUrl.startsWith(VERCEL_PROXY)) {
+    targetUrl = `${VERCEL_PROXY}${encodeURIComponent(targetUrl)}`;
+  }
+
   const qsel = $("#cv-quality-select");
   if (qsel) { qsel.innerHTML = `<option value="-1">Auto</option>`; qsel.disabled = true; }
 
@@ -516,7 +516,7 @@ function cvLoadStreamSource(rawUrl) {
 
   function tryNative() {
     destroyExistingPlayers();
-    video.src = url;
+    video.src = targetUrl;
     restoreVolume();
     video.play().catch(() => { video.muted = true; video.play().catch(() => {}); });
   }
@@ -525,7 +525,7 @@ function cvLoadStreamSource(rawUrl) {
     if (typeof mpegts === "undefined" || !mpegts.isSupported()) { if (onFail) onFail(); return; }
     destroyExistingPlayers();
     activeMpegtsInstance = mpegts.createPlayer({
-      type: "mpegts", url, isLive: true, enableWorker: true, cors: true, withCredentials: false, liveBufferLatencyChasing: true,
+      type: "mpegts", url: targetUrl, isLive: true, enableWorker: true, cors: true, withCredentials: false, liveBufferLatencyChasing: true,
     });
     activeMpegtsInstance.attachMediaElement(video);
     activeMpegtsInstance.load();
@@ -536,7 +536,7 @@ function cvLoadStreamSource(rawUrl) {
 
   if (cvCurrentEngine === "mpegts") { tryMpegts(tryNative); return; }
   if (cvCurrentEngine === "native") { tryNative(); return; }
-  if (cvCurrentEngine === "auto" && isTsStream(url)) { tryMpegts(tryNative); return; }
+  if (cvCurrentEngine === "auto" && isTsStream(rawUrl)) { tryMpegts(tryNative); return; }
 
   if (window.Hls && Hls.isSupported()) {
     activeHlsEngineInstance = new Hls({
@@ -546,7 +546,7 @@ function cvLoadStreamSource(rawUrl) {
       levelLoadingTimeOut: 8000, fragLoadingTimeOut: 10000,
       xhrSetup: (xhr) => { xhr.withCredentials = false; },
     });
-    activeHlsEngineInstance.loadSource(url);
+    activeHlsEngineInstance.loadSource(targetUrl);
     activeHlsEngineInstance.attachMedia(video);
 
     activeHlsEngineInstance.on(Hls.Events.MANIFEST_PARSED, (evt, data) => {
@@ -588,7 +588,7 @@ function cvLoadStreamSource(rawUrl) {
       }
     });
   } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-    video.src = url;
+    video.src = targetUrl;
     restoreVolume();
     video.addEventListener("loadedmetadata", () => video.play().catch(() => { video.muted = true; video.play().catch(() => {}); }), { once: true });
   } else {
@@ -596,7 +596,6 @@ function cvLoadStreamSource(rawUrl) {
   }
 }
 
-// ── toast, play/pause, mute, volume, fullscreen, pip ──
 function cvShowToast(msg) {
   const t = $("#cv-toast");
   if (!t) return;
@@ -682,7 +681,6 @@ function cvSetEngine(engine) {
   cvShowToast("Engine: " + (label ? label.textContent : engine));
 }
 
-// ── next/previous channel (cycles through the full channel list) ──
 function cvPlayNext() {
   if (!CHANNELS.length) return;
   const nextIdx = (activeChannelIndex + 1) % CHANNELS.length;
@@ -696,7 +694,6 @@ function cvPlayPrev() {
   cvShowToast("⏮ " + CHANNELS[prevIdx].name);
 }
 
-// ── seek / progress bar ──
 function cvSeekFraction(e) {
   const bar = $("#cv-progress-wrap");
   if (!bar) return 0;
@@ -769,7 +766,6 @@ function cvUpdateProgress() {
   }
 }
 
-// ── rewind / fast-forward / go-live / screenshot ──
 function cvRewind() {
   const v = $("#main-hybrid-video-node");
   if (!v) return;
@@ -821,7 +817,6 @@ function cvTakeScreenshot() {
   } catch { cvShowToast("⚠ Screenshot failed (CORS)"); }
 }
 
-// ── icon/poster/loader helpers ──
 function cvUpdateVolIcon(val, muted) {
   const icon = $("#cv-vol-icon");
   if (!icon) return;
@@ -865,7 +860,6 @@ function cvInitVideoEvents() {
   }
 }
 
-// ── global mouse/touch → show controls, then auto-hide ──
 document.addEventListener("mousemove", () => {
   const frame = $("#cv-player-frame");
   if (!frame) return;
@@ -887,7 +881,6 @@ document.addEventListener("dblclick", (e) => {
   cvToggleFullscreen();
 });
 
-// ── floating channel-list panel inside the player ──
 function cvToggleChannelSidebar() {
   const panel = $("#cv-float-chlist");
   if (!panel) return;
@@ -955,7 +948,6 @@ document.addEventListener("fullscreenchange", () => {
   }
 });
 
-// ── keyboard shortcuts (Space/M/F/P/Arrows/L/S) ──
 document.addEventListener("keydown", (e) => {
   const tag = (e.target || e.srcElement).tagName;
   if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
@@ -987,7 +979,6 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-// ── live clock (Asia/Dhaka) above the player ──
 function startBSTClockEngine() {
   function updateClock() {
     const now = new Date();
@@ -999,9 +990,7 @@ function startBSTClockEngine() {
   setInterval(updateClock, 1000);
 }
 
-function setupPlayerControls() {
-  // (no-op: player is now a persistent pane, not a closable modal)
-}
+function setupPlayerControls() {}
 
 // ---------- INIT ----------
 async function init() {

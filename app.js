@@ -17,7 +17,7 @@ const LS_RESUME = "obiram_resume";
 
 let CHANNELS = [];      // flat list {id,name,group,logo,sources[]}
 let GROUPS = [];        // ordered unique group names
-let currentView = "home"; // 'home' | 'movies' | 'sportz'
+let currentChip = "all"; // 'all' | 'favs' | 'pinned' | category key
 let currentChannel = null;
 let hls = null;
 let mpegtsPlayer = null;
@@ -158,48 +158,67 @@ function hideSplash() {
   }, 400);
 }
 
-// ---------- Render sidebar / categories ----------
-function buildGroups() {
-  const map = {};
-  CHANNELS.forEach((c) => { map[c.group] = (map[c.group] || 0) + 1; });
-  GROUPS = Object.keys(map).sort((a, b) => map[b] - map[a]);
-  return map;
+// ---------- Category mapping + chip bar ----------
+const LS_PIN = "obiram_pinned";
+
+const CATEGORY_DEFS = [
+  { key: "sports", label: "🏏 Sports", match: /sport|fifa|cricket/i },
+  { key: "news", label: "📰 News", match: /news/i },
+  { key: "bangla", label: "🇧🇩 Bangla", match: /^bangla$|bangladeshi/i },
+  { key: "indian_bangla", label: "🇮🇳 Indian Bangla", match: /indian.?bangla|kolkata/i },
+  { key: "movies", label: "🍿 Movies", match: /movie/i },
+  { key: "kids", label: "🧸 Kids", match: /kids/i },
+  { key: "entertainment", label: "🎭 Entertainment", match: /entertainment|music/i },
+  { key: "lifestyle", label: "📖 Lifestyle", match: /document|lifestyle/i },
+  { key: "religious", label: "🛐 Religious", match: /islamic|religious/i },
+];
+
+function categorize(chan) {
+  for (const def of CATEGORY_DEFS) {
+    if (def.match.test(chan.group)) return def.key;
+  }
+  return "other";
 }
 
-function renderSidebar(counts) {
-  const list = $("#catList");
-  list.innerHTML = "";
+function buildGroups() {
+  CHANNELS.forEach((c) => { c.category = categorize(c); });
+}
 
-  const allItem = document.createElement("div");
-  allItem.className = "cat-item active";
-  allItem.dataset.group = "__all__";
-  allItem.innerHTML = `<span>সব চ্যানেল</span><span class="cnt">${CHANNELS.length}</span>`;
-  list.appendChild(allItem);
+function chipCounts() {
+  const counts = { all: CHANNELS.length, favs: loadJSON(LS_FAV, []).length, pinned: loadJSON(LS_PIN, []).length, other: 0 };
+  CATEGORY_DEFS.forEach((d) => (counts[d.key] = 0));
+  CHANNELS.forEach((c) => { counts[c.category] = (counts[c.category] || 0) + 1; });
+  return counts;
+}
 
-  GROUPS.forEach((g) => {
-    const item = document.createElement("div");
-    item.className = "cat-item";
-    item.dataset.group = g;
-    item.innerHTML = `<span>${g}</span><span class="cnt">${counts[g]}</span>`;
-    list.appendChild(item);
+function renderChipBar() {
+  const bar = $("#chipBar");
+  const counts = chipCounts();
+  const chips = [
+    { key: "all", label: "🌐 All" },
+    { key: "favs", label: "❤️ Favs" },
+    { key: "pinned", label: "📌 Pinned" },
+    ...CATEGORY_DEFS,
+    { key: "other", label: "📂 Other" },
+  ];
+  bar.innerHTML = chips
+    .map(
+      (c) =>
+        `<button class="chip${c.key === currentChip ? " active" : ""}" data-key="${c.key}">${c.label} <span class="chip-cnt">${counts[c.key] || 0}</span></button>`
+    )
+    .join("");
+  bar.querySelectorAll(".chip").forEach((btn) => {
+    btn.addEventListener("click", () => setChip(btn.dataset.key));
   });
+}
 
-  list.addEventListener("click", (e) => {
-    const item = e.target.closest(".cat-item");
-    if (!item) return;
-    $$(".cat-item").forEach((i) => i.classList.remove("active"));
-    item.classList.add("active");
-    const g = item.dataset.group;
-    if (currentView !== "home") switchView("home");
-    if (g === "__all__") {
-      renderCatSections(CHANNELS);
-    } else {
-      setTimeout(() => {
-        document.getElementById("sec-" + slugify(g))?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 50);
-    }
-    closeSidebarMobile();
-  });
+function setChip(key) {
+  currentChip = key;
+  $$(".chip").forEach((c) => c.classList.toggle("active", c.dataset.key === key));
+  $("#searchInput").value = "";
+  $("#searchClear").classList.add("hidden");
+  applyFilters();
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 // ---------- Channel card ----------
@@ -209,9 +228,12 @@ function channelCard(chan) {
   card.dataset.id = chan.id;
 
   const favs = loadJSON(LS_FAV, []);
+  const pins = loadJSON(LS_PIN, []);
   const isFav = favs.includes(chan.id);
+  const isPinned = pins.includes(chan.id);
 
   card.innerHTML = `
+    <button class="chan-pin ${isPinned ? "on" : ""}" aria-label="পিন" data-id="${chan.id}">📌</button>
     <button class="chan-fav ${isFav ? "on" : ""}" aria-label="প্রিয়" data-id="${chan.id}">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-10.2-9.2C.3 8.7 1.8 5 5.4 4.3c2-.4 3.9.5 5 2.2l1.6 2.4 1.6-2.4c1.1-1.7 3-2.6 5-2.2 3.6.7 5.1 4.4 3.6 7.5C19.5 16.4 12 21 12 21z"/></svg>
     </button>
@@ -226,7 +248,7 @@ function channelCard(chan) {
   `;
 
   card.addEventListener("click", (e) => {
-    if (e.target.closest(".chan-fav")) return;
+    if (e.target.closest(".chan-fav") || e.target.closest(".chan-pin")) return;
     openPlayer(chan);
   });
 
@@ -234,146 +256,58 @@ function channelCard(chan) {
     e.stopPropagation();
     toggleFav(chan.id);
     e.currentTarget.classList.toggle("on");
-    renderFavRow();
+    renderChipBar();
+    if (currentChip === "favs") applyFilters();
+  });
+
+  card.querySelector(".chan-pin").addEventListener("click", (e) => {
+    e.stopPropagation();
+    togglePin(chan.id);
+    e.currentTarget.classList.toggle("on");
+    renderChipBar();
+    if (currentChip === "pinned") applyFilters();
   });
 
   return card;
 }
 
-// ---------- Grid by category ----------
-function renderCatSections(list) {
-  const wrap = $("#catSections");
-  wrap.innerHTML = "";
+// ---------- Grid ----------
+function renderGrid(list) {
+  const grid = $("#mainGrid");
+  grid.innerHTML = "";
   $("#emptyState").classList.toggle("hidden", list.length > 0);
-  if (!list.length) return;
-
-  const byGroup = {};
-  list.forEach((c) => {
-    byGroup[c.group] = byGroup[c.group] || [];
-    byGroup[c.group].push(c);
-  });
-
-  const order = GROUPS.filter((g) => byGroup[g]);
-  order.forEach((g) => {
-    const section = document.createElement("section");
-    section.className = "cat-section";
-    section.id = "sec-" + slugify(g);
-
-    const title = document.createElement("div");
-    title.className = "cat-section-title";
-    title.innerHTML = `<span>${g}</span><span class="cs-count">${byGroup[g].length}টি চ্যানেল</span>`;
-    section.appendChild(title);
-
-    const grid = document.createElement("div");
-    grid.className = "grid";
-    byGroup[g].forEach((c) => grid.appendChild(channelCard(c)));
-    section.appendChild(grid);
-
-    wrap.appendChild(section);
-  });
+  list.forEach((c) => grid.appendChild(channelCard(c)));
 }
 
-// ---------- Zones: Movies / Sportz ----------
-function moviePoster(chan) {
-  const card = document.createElement("div");
-  card.className = "poster-card";
-  card.innerHTML = `
-    <div class="poster-thumb">
-      <span class="poster-badge"><span class="live-dot" style="width:5px;height:5px;"></span>LIVE</span>
-      ${
-        chan.logo
-          ? `<img src="${chan.logo}" alt="" loading="lazy" onerror="this.outerHTML='<div class=&quot;poster-fallback&quot;>${chan.name}</div>'">`
-          : `<div class="poster-fallback">${chan.name}</div>`
-      }
-    </div>
-    <div class="poster-name">${chan.name}</div>
-  `;
-  card.addEventListener("click", () => openPlayer(chan));
-  return card;
-}
-
-function sportCard(chan) {
-  const card = document.createElement("div");
-  card.className = "sport-card";
-  card.innerHTML = `
-    <img class="sport-logo" src="${chan.logo || ""}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
-    <div class="sport-info">
-      <div class="sport-name">${chan.name}</div>
-      <div class="sport-live-tag"><span class="live-dot" style="width:6px;height:6px;"></span>LIVE NOW</div>
-    </div>
-  `;
-  card.addEventListener("click", () => openPlayer(chan));
-  return card;
-}
-
-function renderMoviesZone() {
-  const grid = $("#moviesGrid");
-  grid.innerHTML = "";
-  const movies = CHANNELS.filter((c) => /movie/i.test(c.group));
-  movies.forEach((c) => grid.appendChild(moviePoster(c)));
-  if (!movies.length) grid.innerHTML = `<p style="color:var(--muted);font-size:13px;">এখনো কোনো মুভি চ্যানেল পাওয়া যায়নি।</p>`;
-}
-
-function renderSportzZone() {
-  const grid = $("#sportzGrid");
-  grid.innerHTML = "";
-  const sports = CHANNELS.filter((c) => /sport|fifa|cricket/i.test(c.group));
-  sports.forEach((c) => grid.appendChild(sportCard(c)));
-  if (!sports.length) grid.innerHTML = `<p style="color:var(--muted);font-size:13px;">এখনো কোনো স্পোর্টস চ্যানেল পাওয়া যায়নি।</p>`;
-}
-
-function switchView(view) {
-  currentView = view;
-  $$(".zone-tab").forEach((t) => t.classList.toggle("active", t.dataset.view === view));
-
-  const homeEls = ["#resumeSection", "#favSection", "#catSections"];
-  $("#moviesZone").classList.toggle("hidden", view !== "movies");
-  $("#sportzZone").classList.toggle("hidden", view !== "sportz");
-  $("#emptyState").classList.add("hidden");
-
-  if (view === "home") {
-    $("#catSections").classList.remove("hidden");
-    renderResumeRow();
-    renderFavRow();
-    renderCatSections(CHANNELS);
+function applyFilters() {
+  const q = $("#searchInput").value.trim().toLowerCase();
+  let list;
+  if (currentChip === "all") list = CHANNELS;
+  else if (currentChip === "favs") {
+    const favs = loadJSON(LS_FAV, []);
+    list = favs.map((id) => CHANNELS.find((c) => c.id === id)).filter(Boolean);
+  } else if (currentChip === "pinned") {
+    const pins = loadJSON(LS_PIN, []);
+    list = pins.map((id) => CHANNELS.find((c) => c.id === id)).filter(Boolean);
   } else {
-    homeEls.forEach((sel) => $(sel).classList.add("hidden"));
-    if (view === "movies") renderMoviesZone();
-    if (view === "sportz") renderSportzZone();
+    list = CHANNELS.filter((c) => c.category === currentChip);
   }
 
-  $("#searchInput").value = "";
-  $("#searchClear").classList.add("hidden");
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  if (q) list = list.filter((c) => c.name.toLowerCase().includes(q) || c.group.toLowerCase().includes(q));
+
+  const emptyText = $("#emptyStateText");
+  if (currentChip === "favs") emptyText.textContent = "এখনো কোনো প্রিয় চ্যানেল নেই — হার্ট আইকনে ক্লিক করে যোগ করো";
+  else if (currentChip === "pinned") emptyText.textContent = "এখনো কোনো পিন করা চ্যানেল নেই — 📌 আইকনে ক্লিক করে যোগ করো";
+  else emptyText.textContent = "কোনো চ্যানেল পাওয়া যায়নি";
+
+  renderGrid(list);
 }
 
-function setupZoneNav() {
-  $("#zoneNav").addEventListener("click", (e) => {
-    const btn = e.target.closest(".zone-tab");
-    if (!btn) return;
-    switchView(btn.dataset.view);
-  });
-}
-
-// ---------- Favorites row ----------
-function renderFavRow() {
-  const favIds = loadJSON(LS_FAV, []);
-  const favSection = $("#favSection");
-  const row = $("#favRow");
-  row.innerHTML = "";
-  const favChans = favIds.map((id) => CHANNELS.find((c) => c.id === id)).filter(Boolean);
-  favSection.classList.toggle("hidden", favChans.length === 0);
-  favChans.forEach((chan) => {
-    const card = document.createElement("div");
-    card.className = "resume-card";
-    card.innerHTML = `
-      <img src="${chan.logo || ""}" alt="" onerror="this.style.display='none'">
-      <div class="rc-name">${chan.name}</div>
-      <div class="rc-grp">${chan.group}</div>
-    `;
-    card.addEventListener("click", () => openPlayer(chan));
-    row.appendChild(card);
-  });
+function togglePin(id) {
+  let pins = loadJSON(LS_PIN, []);
+  if (pins.includes(id)) pins = pins.filter((f) => f !== id);
+  else pins.push(id);
+  saveJSON(LS_PIN, pins);
 }
 
 function toggleFav(id) {
@@ -413,42 +347,25 @@ function setupSearch() {
   const input = $("#searchInput");
   const clearBtn = $("#searchClear");
   input.addEventListener("input", () => {
-    const q = input.value.trim().toLowerCase();
-    clearBtn.classList.toggle("hidden", !q);
-    if (q && currentView !== "home") {
-      currentView = "home";
-      $$(".zone-tab").forEach((t) => t.classList.toggle("active", t.dataset.view === "home"));
-      $("#moviesZone").classList.add("hidden");
-      $("#sportzZone").classList.add("hidden");
-      $("#catSections").classList.remove("hidden");
-      $("#resumeSection").classList.add("hidden");
-      $("#favSection").classList.add("hidden");
-    }
-    if (!q) { renderCatSections(CHANNELS); return; }
-    const filtered = CHANNELS.filter(
-      (c) => c.name.toLowerCase().includes(q) || c.group.toLowerCase().includes(q)
-    );
-    renderCatSections(filtered);
+    clearBtn.classList.toggle("hidden", !input.value.trim());
+    applyFilters();
   });
   clearBtn.addEventListener("click", () => {
     input.value = "";
     clearBtn.classList.add("hidden");
-    renderCatSections(CHANNELS);
+    applyFilters();
     input.focus();
   });
 }
 
-// ---------- Sidebar mobile toggle ----------
-function closeSidebarMobile() {
-  $("#sidebar").classList.remove("open");
-  $("#sidebarOverlay").classList.add("hidden");
-}
-function setupSidebarToggle() {
-  $("#menuToggle").addEventListener("click", () => {
-    $("#sidebar").classList.add("open");
-    $("#sidebarOverlay").classList.remove("hidden");
-  });
-  $("#sidebarOverlay").addEventListener("click", closeSidebarMobile);
+// ---------- Help drawer ("চ্যানেল প্লে হচ্ছে না?") ----------
+function setupHelpDrawer() {
+  const fab = $("#helpFab");
+  const overlay = $("#helpOverlay");
+  const closeBtn = $("#helpClose");
+  fab.addEventListener("click", () => overlay.classList.remove("hidden"));
+  closeBtn.addEventListener("click", () => overlay.classList.add("hidden"));
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.classList.add("hidden"); });
 }
 
 // ---------- Clock ----------
@@ -1086,8 +1003,7 @@ function setupPlayerControls() {
 // ---------- INIT ----------
 async function init() {
   setupSearch();
-  setupSidebarToggle();
-  setupZoneNav();
+  setupHelpDrawer();
   setupPlayerControls();
   startBSTClockEngine();
   tickClock();
@@ -1100,10 +1016,9 @@ async function init() {
     CHANNELS = parseM3U(text);
     if (!CHANNELS.length) throw new Error("empty");
 
-    const counts = buildGroups();
-    renderSidebar(counts);
-    renderCatSections(CHANNELS);
-    renderFavRow();
+    buildGroups();
+    renderChipBar();
+    applyFilters();
     renderResumeRow();
 
     setSplashProgress(100, `${CHANNELS.length}টি চ্যানেল প্রস্তুত`);

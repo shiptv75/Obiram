@@ -59,8 +59,118 @@
 
   <div class="body-wrap">
 
-    <!-- Main -->
-    <main class="main">
+    <!-- ===== FIXED PLAYER PANE (ported 1:1 from Shamim IPTV Blogger theme) ===== -->
+    <div id="playerPane" class="player-pane">
+      <div class="dp-player-main-card-wrapper cv-shell">
+
+        <!-- Clock bar above player -->
+        <div class="player-clock-bar">
+          <div class="clock-time" id="player-top-clock">00:00 AM</div>
+        </div>
+
+        <div class="dp-player-aspect-frame" id="cv-player-frame">
+          <video id="main-hybrid-video-node" playsinline="playsinline"></video>
+
+          <!-- Poster overlay -->
+          <div class="cv-poster-overlay" id="cv-poster">
+            <img alt="Obiram TV" src="https://i.ibb.co.com/Z17yGB6M/Shamim-IP-TV-Transparent.png">
+            <span class="cv-poster-hint">Select a Channel to Watch</span>
+          </div>
+
+          <!-- Floating Channel List Panel -->
+          <div class="cv-float-chlist" id="cv-float-chlist">
+            <div class="cv-float-chlist-header">
+              <div class="cv-float-chlist-title"><i class="fa-solid fa-satellite-dish"></i>Channel List</div>
+              <button class="cv-float-chlist-close" onclick="cvCloseFloatChList()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="cv-float-chlist-search">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input id="cv-float-search" oninput="cvFloatChSearch(this.value)" placeholder="Search..." type="text">
+            </div>
+            <div class="cv-float-chlist-body" id="cv-float-chlist-body"></div>
+          </div>
+
+          <!-- Top-right overlay buttons -->
+          <div class="cv-topright-overlay" id="cv-topright-overlay">
+            <div class="cv-server-wrap">
+              <button class="cv-topright-btn" id="cv-server-btn" onclick="toggleServerMenu()" title="Switch Server"><i class="fa-solid fa-server"></i></button>
+              <div class="cv-server-dropdown" id="cv-server-dropdown">
+                <div class="cv-server-dropdown-header">Select Server</div>
+                <div id="cv-server-list"></div>
+              </div>
+            </div>
+            <button class="cv-topright-btn" id="cv-chlist-btn" onclick="cvToggleChannelSidebar()" title="Channel List"><i class="fa-solid fa-list"></i></button>
+          </div>
+
+          <!-- Loading ring -->
+          <div class="cv-loading-ring" id="cv-loader"></div>
+          <!-- Keyboard toast -->
+          <div class="cv-key-toast" id="cv-toast"></div>
+
+          <!-- Custom controls -->
+          <div class="cv-controls" id="cv-controls">
+            <div class="cv-time-row">
+              <span class="cv-elapsed" id="cv-elapsed">0:00</span>
+              <span class="cv-duration" id="cv-duration-text">LIVE</span>
+            </div>
+            <div class="cv-progress-wrap" id="cv-progress-wrap" onmousedown="cvSeekStart(event)" onmousemove="cvSeekPreview(event)" onmouseup="cvSeekEnd(event)" ontouchend="cvSeekEnd(event)" ontouchstart="cvSeekStart(event)">
+              <div class="cv-progress-live" id="cv-progress-live" style="display:none;"></div>
+              <div class="cv-progress-buffer" id="cv-progress-buffer"></div>
+              <div class="cv-progress-fill" id="cv-progress-fill"></div>
+              <div class="cv-progress-thumb" id="cv-progress-thumb"></div>
+            </div>
+            <div class="cv-controls-row">
+              <button class="cv-btn" id="cv-prev-btn" onclick="cvPlayPrev()" title="Previous"><i class="fa-solid fa-backward-step"></i></button>
+              <button class="cv-btn cv-btn-rw" onclick="cvRewind()" title="Rewind 10s"><i class="fa-solid fa-backward"></i></button>
+              <button class="cv-btn" id="cv-play-btn" onclick="cvTogglePlay()" title="Play/Pause (Space)"><i class="fa-solid fa-play" id="cv-play-icon"></i></button>
+              <button class="cv-btn cv-btn-ff" onclick="cvFastForward()" title="Fast Forward 10s"><i class="fa-solid fa-forward"></i></button>
+              <button class="cv-btn" id="cv-next-btn" onclick="cvPlayNext()" title="Next"><i class="fa-solid fa-forward-step"></i></button>
+              <button class="cv-btn cv-btn-live" id="cv-golive-btn" onclick="cvGoLive()" style="display:none;" title="Jump to Live">&#9679; LIVE</button>
+              <div class="cv-vol-wrap">
+                <button class="cv-btn" id="cv-mute-btn" onclick="cvToggleMute()" title="Mute (M)"><i class="fa-solid fa-volume-high" id="cv-vol-icon"></i></button>
+                <input class="cv-vol-slider" id="cv-vol-slider" max="1" min="0" oninput="cvSetVolume(this.value)" step="0.05" type="range" value="1">
+              </div>
+              <div class="cv-spacer"></div>
+              <div class="cv-engine-wrap">
+                <button class="cv-btn cv-engine-trigger" id="cv-engine-trigger" onclick="cvToggleEnginePanel()" title="Stream Engine">
+                  <i class="fa-solid fa-sliders"></i>
+                  <span id="cv-engine-label">Auto</span>
+                </button>
+                <div class="cv-engine-panel" id="cv-engine-panel" style="display:none">
+                  <div class="cv-engine-panel-title">Engine</div>
+                  <div class="cv-engine-btns">
+                    <button class="cv-engine-btn active" data-engine="auto" onclick="cvSetEngine('auto')">Auto</button>
+                    <button class="cv-engine-btn" data-engine="hls" onclick="cvSetEngine('hls')">HLS.js</button>
+                    <button class="cv-engine-btn" data-engine="mpegts" onclick="cvSetEngine('mpegts')">mpegts</button>
+                    <button class="cv-engine-btn" data-engine="native" onclick="cvSetEngine('native')">Native</button>
+                  </div>
+                </div>
+              </div>
+              <select class="cv-quality-select" disabled="disabled" id="cv-quality-select" onchange="cvSetQuality(this.value)">
+                <option value="-1">Auto</option>
+              </select>
+              <span class="cv-quality-badge" id="cv-quality-badge">Auto</span>
+              <button class="cv-btn cv-btn-screenshot" onclick="cvTakeScreenshot()" title="Screenshot (S)"><i class="fa-solid fa-camera"></i></button>
+              <button class="cv-btn cv-btn-pip" onclick="cvTogglePip()" title="Picture in Picture (P)"><i class="fa-solid fa-clone"></i></button>
+              <button class="cv-btn cv-btn-fs" onclick="cvToggleFullscreen()" title="Fullscreen (F)"><i class="fa-solid fa-expand" id="cv-fs-icon"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="dp-player-meta-info-block">
+          <div class="dp-meta-channel-logo" id="player-logo-frame">
+            <i class="fa-solid fa-play" id="meta-logo-icon" style="font-size:20px;color:var(--cv-primary);"></i>
+          </div>
+          <div class="dp-meta-text-details">
+            <h3 class="dp-meta-channel-name" id="player-channel-title">Select a Channel to Stream</h3>
+            <p class="dp-meta-status-text" id="player-channel-status">System Engine: Ready</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CHANNEL / PLAYLIST PANE ===== -->
+    <div class="channel-pane">
 
       <!-- Continue watching -->
       <section id="resumeSection" class="row hidden">
@@ -69,14 +179,14 @@
       </section>
 
       <!-- Grid -->
-      <div class="grid" id="mainGrid"></div>
+      <div class="grid icon-grid" id="mainGrid"></div>
 
       <div id="emptyState" class="empty-state hidden">
         <div class="empty-mark">📡</div>
         <p id="emptyStateText">কোনো চ্যানেল পাওয়া যায়নি</p>
         <span>অন্য নামে খুঁজে দেখুন</span>
       </div>
-    </main>
+    </div>
   </div>
 </div>
 
@@ -108,118 +218,6 @@
         <li>VPN/Ad-blocker চালু থাকলে সাময়িক বন্ধ রাখো</li>
       </ul>
       <div class="help-note">কয়েক মিনিট পর আবার চেষ্টা করলে বেশিরভাগ সমস্যা এমনিতেই ঠিক হয়ে যায়।</div>
-    </div>
-  </div>
-</div>
-
-
-<!-- ===== PLAYER OVERLAY (ported 1:1 from Shamim IPTV Blogger theme) ===== -->
-<div id="playerOverlay" class="player-overlay hidden">
-  <div class="dp-player-main-card-wrapper cv-shell">
-
-    <!-- Clock bar above player -->
-    <div class="player-clock-bar">
-      <div class="clock-time" id="player-top-clock">00:00 AM</div>
-      <button class="cv-topright-btn cv-close-btn" id="closePlayer" title="Close"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-
-    <div class="dp-player-aspect-frame" id="cv-player-frame">
-      <video id="main-hybrid-video-node" playsinline="playsinline"></video>
-
-      <!-- Poster overlay -->
-      <div class="cv-poster-overlay" id="cv-poster">
-        <img alt="Obiram TV" src="https://i.ibb.co.com/Z17yGB6M/Shamim-IP-TV-Transparent.png">
-        <span class="cv-poster-hint">Select a Channel to Watch</span>
-      </div>
-
-      <!-- Floating Channel List Panel -->
-      <div class="cv-float-chlist" id="cv-float-chlist">
-        <div class="cv-float-chlist-header">
-          <div class="cv-float-chlist-title"><i class="fa-solid fa-satellite-dish"></i>Channel List</div>
-          <button class="cv-float-chlist-close" onclick="cvCloseFloatChList()"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div class="cv-float-chlist-search">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <input id="cv-float-search" oninput="cvFloatChSearch(this.value)" placeholder="Search..." type="text">
-        </div>
-        <div class="cv-float-chlist-body" id="cv-float-chlist-body"></div>
-      </div>
-
-      <!-- Top-right overlay buttons -->
-      <div class="cv-topright-overlay" id="cv-topright-overlay">
-        <div class="cv-server-wrap">
-          <button class="cv-topright-btn" id="cv-server-btn" onclick="toggleServerMenu()" title="Switch Server"><i class="fa-solid fa-server"></i></button>
-          <div class="cv-server-dropdown" id="cv-server-dropdown">
-            <div class="cv-server-dropdown-header">Select Server</div>
-            <div id="cv-server-list"></div>
-          </div>
-        </div>
-        <button class="cv-topright-btn" id="cv-chlist-btn" onclick="cvToggleChannelSidebar()" title="Channel List"><i class="fa-solid fa-list"></i></button>
-      </div>
-
-      <!-- Loading ring -->
-      <div class="cv-loading-ring" id="cv-loader"></div>
-      <!-- Keyboard toast -->
-      <div class="cv-key-toast" id="cv-toast"></div>
-
-      <!-- Custom controls -->
-      <div class="cv-controls" id="cv-controls">
-        <div class="cv-time-row">
-          <span class="cv-elapsed" id="cv-elapsed">0:00</span>
-          <span class="cv-duration" id="cv-duration-text">LIVE</span>
-        </div>
-        <div class="cv-progress-wrap" id="cv-progress-wrap" onmousedown="cvSeekStart(event)" onmousemove="cvSeekPreview(event)" onmouseup="cvSeekEnd(event)" ontouchend="cvSeekEnd(event)" ontouchstart="cvSeekStart(event)">
-          <div class="cv-progress-live" id="cv-progress-live" style="display:none;"></div>
-          <div class="cv-progress-buffer" id="cv-progress-buffer"></div>
-          <div class="cv-progress-fill" id="cv-progress-fill"></div>
-          <div class="cv-progress-thumb" id="cv-progress-thumb"></div>
-        </div>
-        <div class="cv-controls-row">
-          <button class="cv-btn" id="cv-prev-btn" onclick="cvPlayPrev()" title="Previous"><i class="fa-solid fa-backward-step"></i></button>
-          <button class="cv-btn cv-btn-rw" onclick="cvRewind()" title="Rewind 10s"><i class="fa-solid fa-backward"></i></button>
-          <button class="cv-btn" id="cv-play-btn" onclick="cvTogglePlay()" title="Play/Pause (Space)"><i class="fa-solid fa-play" id="cv-play-icon"></i></button>
-          <button class="cv-btn cv-btn-ff" onclick="cvFastForward()" title="Fast Forward 10s"><i class="fa-solid fa-forward"></i></button>
-          <button class="cv-btn" id="cv-next-btn" onclick="cvPlayNext()" title="Next"><i class="fa-solid fa-forward-step"></i></button>
-          <button class="cv-btn cv-btn-live" id="cv-golive-btn" onclick="cvGoLive()" style="display:none;" title="Jump to Live">&#9679; LIVE</button>
-          <div class="cv-vol-wrap">
-            <button class="cv-btn" id="cv-mute-btn" onclick="cvToggleMute()" title="Mute (M)"><i class="fa-solid fa-volume-high" id="cv-vol-icon"></i></button>
-            <input class="cv-vol-slider" id="cv-vol-slider" max="1" min="0" oninput="cvSetVolume(this.value)" step="0.05" type="range" value="1">
-          </div>
-          <div class="cv-spacer"></div>
-          <div class="cv-engine-wrap">
-            <button class="cv-btn cv-engine-trigger" id="cv-engine-trigger" onclick="cvToggleEnginePanel()" title="Stream Engine">
-              <i class="fa-solid fa-sliders"></i>
-              <span id="cv-engine-label">Auto</span>
-            </button>
-            <div class="cv-engine-panel" id="cv-engine-panel" style="display:none">
-              <div class="cv-engine-panel-title">Engine</div>
-              <div class="cv-engine-btns">
-                <button class="cv-engine-btn active" data-engine="auto" onclick="cvSetEngine('auto')">Auto</button>
-                <button class="cv-engine-btn" data-engine="hls" onclick="cvSetEngine('hls')">HLS.js</button>
-                <button class="cv-engine-btn" data-engine="mpegts" onclick="cvSetEngine('mpegts')">mpegts</button>
-                <button class="cv-engine-btn" data-engine="native" onclick="cvSetEngine('native')">Native</button>
-              </div>
-            </div>
-          </div>
-          <select class="cv-quality-select" disabled="disabled" id="cv-quality-select" onchange="cvSetQuality(this.value)">
-            <option value="-1">Auto</option>
-          </select>
-          <span class="cv-quality-badge" id="cv-quality-badge">Auto</span>
-          <button class="cv-btn cv-btn-screenshot" onclick="cvTakeScreenshot()" title="Screenshot (S)"><i class="fa-solid fa-camera"></i></button>
-          <button class="cv-btn cv-btn-pip" onclick="cvTogglePip()" title="Picture in Picture (P)"><i class="fa-solid fa-clone"></i></button>
-          <button class="cv-btn cv-btn-fs" onclick="cvToggleFullscreen()" title="Fullscreen (F)"><i class="fa-solid fa-expand" id="cv-fs-icon"></i></button>
-        </div>
-      </div>
-    </div>
-
-    <div class="dp-player-meta-info-block">
-      <div class="dp-meta-channel-logo" id="player-logo-frame">
-        <i class="fa-solid fa-play" id="meta-logo-icon" style="font-size:20px;color:var(--cv-primary);"></i>
-      </div>
-      <div class="dp-meta-text-details">
-        <h3 class="dp-meta-channel-name" id="player-channel-title">Select a Channel to Stream</h3>
-        <p class="dp-meta-status-text" id="player-channel-status">System Engine: Ready</p>
-      </div>
     </div>
   </div>
 </div>

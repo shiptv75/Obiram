@@ -264,7 +264,7 @@ a{ color: inherit; text-decoration: none; }
 }
 .chip .chip-cnt{ font-family: var(--font-mono); font-size:10.5px; opacity:.75; }
 
-.channel-pane{ flex:1; min-width:0; padding: 20px 0 70px; }
+.channel-pane{ flex: 0 0 42%; min-width:0; padding: 20px 0 70px; }
 
 /* ============ HELP FAB + SHEET ============ */
 .help-fab{
@@ -338,7 +338,7 @@ a{ color: inherit; text-decoration: none; }
   display:grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:14px;
 }
 .icon-grid{
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
 }
 .icon-grid .chan-card{ padding: 12px 8px 10px; }
@@ -404,7 +404,7 @@ a{ color: inherit; text-decoration: none; }
 
 .player-pane{
   position: sticky; top: 121px;
-  width: 420px; flex-shrink:0;
+  flex: 0 0 58%; min-width:0;
   max-height: calc(100vh - 137px);
   overflow-y:auto;
 }
@@ -605,5 +605,4 @@ a{ color: inherit; text-decoration: none; }
   .cv-controls{ padding: 20px 8px 8px; }
   .cv-btn{ padding:5px 6px; }
   .dp-meta-channel-name{ font-size:15px; }
-}
 }

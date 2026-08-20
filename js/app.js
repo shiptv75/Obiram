@@ -386,17 +386,20 @@ function openPlayer(chan) {
   saveResume(chan);
   renderResumeRow();
 
-  $("#playerOverlay").classList.remove("hidden");
-  document.body.style.overflow = "hidden";
   cvInitVideoEvents();
   playChannel(chan);
+
+  // on mobile the player pane sits above the grid — scroll it into view
+  if (window.innerWidth <= 860) {
+    $("#playerPane")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 }
 
 function closePlayer() {
   destroyExistingPlayers();
-  $("#playerOverlay").classList.add("hidden");
-  document.body.style.overflow = "";
   cvShowPoster();
+  $("#player-channel-title").textContent = "Select a Channel to Stream";
+  $("#player-channel-status").textContent = "System Engine: Ready";
   currentChannel = null;
 }
 
@@ -997,7 +1000,7 @@ function startBSTClockEngine() {
 }
 
 function setupPlayerControls() {
-  $("#closePlayer").addEventListener("click", closePlayer);
+  // (no-op: player is now a persistent pane, not a closable modal)
 }
 
 // ---------- INIT ----------

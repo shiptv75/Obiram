@@ -1,0 +1,17 @@
+{
+  "name": "obiram-tv",
+  "version": "1.0.0",
+  "description": "Obiram TV - Live Entertainment",
+  "type": "module",
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'No build step required for static site'",
+    "lint": "echo 'No linter configured'"
+  },
+  "keywords": ["iptv", "streaming", "tv"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vercel/speed-insights": "^1.0.14"
+  }
+}

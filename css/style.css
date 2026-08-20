@@ -236,7 +236,7 @@ a{ color: inherit; text-decoration: none; }
 .sport-live-tag{ display:flex; align-items:center; gap:5px; font-family: var(--font-mono); font-size:10px; color: var(--danger); margin-top:3px; }
 
 /* ============ LAYOUT ============ */
-.body-wrap{ display:flex; align-items:flex-start; }
+.body-wrap{ display:flex; align-items:flex-start; gap:20px; padding: 0 20px; }
 
 /* ============ CATEGORY CHIP BAR ============ */
 .chip-bar{
@@ -264,7 +264,7 @@ a{ color: inherit; text-decoration: none; }
 }
 .chip .chip-cnt{ font-family: var(--font-mono); font-size:10.5px; opacity:.75; }
 
-.main{ flex:1; min-width:0; padding: 20px 20px 70px; }
+.channel-pane{ flex:1; min-width:0; padding: 20px 0 70px; }
 
 /* ============ HELP FAB + SHEET ============ */
 .help-fab{
@@ -337,6 +337,12 @@ a{ color: inherit; text-decoration: none; }
 .grid{
   display:grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:14px;
 }
+.icon-grid{
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 12px;
+}
+.icon-grid .chan-card{ padding: 12px 8px 10px; }
+.icon-grid .chan-logo-wrap{ height:44px; }
 
 .chan-card{
   position:relative;
@@ -396,32 +402,31 @@ a{ color: inherit; text-decoration: none; }
   --cv-logo-bg: #0d1726;
 }
 
-.player-overlay{
-  position:fixed; inset:0; z-index:150;
-  background: rgba(2,4,9,0.94); backdrop-filter: blur(6px);
-  display:flex; align-items:center; justify-content:center;
-  padding: 0; overflow-y:auto;
+.player-pane{
+  position: sticky; top: 121px;
+  width: 420px; flex-shrink:0;
+  max-height: calc(100vh - 137px);
+  overflow-y:auto;
 }
 .cv-shell{
-  width:100%; max-width:900px; margin:auto;
-  background: var(--cv-surface); border-radius:20px;
+  width:100%; margin:0;
+  background: var(--cv-surface); border-radius: var(--r-lg);
   border:1px solid var(--cv-border);
-  box-shadow: 0px 4px 20px rgba(0,201,122,0.08);
+  box-shadow: 0px 4px 20px rgba(13,158,63,0.1);
   overflow:hidden; display:flex; flex-direction:column;
 }
 
 /* Clock bar above player */
 .player-clock-bar{
-  display:flex; align-items:center; justify-content:space-between;
-  padding:14px 20px; border-radius:20px 20px 0 0; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  padding:12px 20px; flex-shrink:0;
   background: linear-gradient(135deg, var(--cv-primary) 0%, var(--cv-primary-dark) 100%);
-  box-shadow: 0 4px 14px rgba(0,201,122,0.3);
+  box-shadow: 0 4px 14px rgba(13,158,63,0.3);
 }
 .player-clock-bar .clock-time{
-  font-size:20px; font-weight:700; color:#fff; font-family: var(--font-mono);
+  font-size:18px; font-weight:700; color:#fff; font-family: var(--font-mono);
   letter-spacing:2px; text-shadow:0 0 8px rgba(0,0,0,.25);
 }
-.cv-close-btn{ background: rgba(0,0,0,.25) !important; border-color: rgba(255,255,255,.3) !important; }
 
 /* Custom Video Player */
 .dp-player-aspect-frame{
@@ -583,25 +588,22 @@ a{ color: inherit; text-decoration: none; }
 
 /* ============ RESPONSIVE ============ */
 @media (max-width: 860px){
-  .only-mobile{ display:flex; }
   .brand-word{ font-size:14px; }
-  .sidebar{
-    position:fixed; top:0; left:0; z-index:36; height:100vh;
-    width:240px; background: var(--void-2);
-    transform: translateX(-100%); transition: transform .25s ease;
-    padding-top: 74px;
-  }
-  .sidebar.open{ transform: translateX(0); }
   .topbar-search{ max-width:none; }
-  .main{ padding: 16px 14px 50px; }
-  .grid{ grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap:10px; }
-  .chan-card{ padding:10px 8px 9px; }
-  .player-name{ max-width:36vw; }
+  .body-wrap{ flex-direction:column; padding: 0 12px; gap:0; }
+  .player-pane{
+    position: sticky; top:57px; width:100%; max-height:none; z-index:25;
+    padding: 10px 0;
+    background: var(--void);
+  }
+  .channel-pane{ padding: 12px 0 60px; width:100%; }
+  .icon-grid{ grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap:9px; }
+  .icon-grid .chan-card{ padding:9px 6px 8px; }
+  .icon-grid .chan-logo-wrap{ height:38px; }
   .live-clock{ display:none; }
-  .zone-nav{ top:57px; padding:8px 14px; }
-  .zone-hero{ padding:16px; gap:12px; }
-  .zone-hero-icon{ width:42px; height:42px; font-size:20px; }
-  .zone-hero-title{ font-size:16px; }
-  .poster-grid{ grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap:10px; }
-  .sport-grid{ grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:10px; }
+  .chip-bar{ top:57px; padding:8px 14px; }
+  .cv-controls{ padding: 20px 8px 8px; }
+  .cv-btn{ padding:5px 6px; }
+  .dp-meta-channel-name{ font-size:15px; }
+}
 }

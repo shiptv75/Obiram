@@ -330,7 +330,7 @@ function channelCard(chan) {
       ${badgeHtml}
       ${
         chan.logo
-          ? `<img src="${chan.logo}" alt="" loading="lazy" onerror="this.parentElement.innerHTML+='<div class=&quot;chan-logo-fallback&quot;>${chan.name.slice(0, 2).toUpperCase()}</div>'; this.remove();">`
+          ? `<img src="${chan.logo}" alt="" loading="lazy" onerror="this.outerHTML='<div class=&quot;chan-logo-fallback&quot;>${chan.name.slice(0, 2).toUpperCase()}</div>'">`
           : `<div class="chan-logo-fallback">${chan.name.slice(0, 2).toUpperCase()}</div>`
       }
     </div>

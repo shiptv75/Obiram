@@ -242,7 +242,16 @@ function hideSplash() {
 }
 
 // ---------- Category mapping + chip bar ----------
-const LS_PIN = "obiram_pinned";
+// Admin-curated "Pinned" channels — edit this list to control which
+// channels show up under the 📌 Pinned category. Match is by channel name
+// (case-insensitive, spaces/punctuation ignored), so "T Sports" and
+// "t-sports" both match an entry of "T Sports".
+const ADMIN_PINNED_NAMES = [
+  // "T Sports",
+  // "Gazi TV",
+  // "Somoy TV",
+];
+const ADMIN_PINNED_SLUGS = ADMIN_PINNED_NAMES.map(slugify);
 
 const CATEGORY_DEFS = [
   { key: "sports", label: "🏏 Sports", match: /sport|fifa|cricket/i },
@@ -264,11 +273,19 @@ function categorize(chan) {
 }
 
 function buildGroups() {
-  CHANNELS.forEach((c) => { c.category = categorize(c); });
+  CHANNELS.forEach((c) => {
+    c.category = categorize(c);
+    c.isPinned = ADMIN_PINNED_SLUGS.includes(slugify(c.name));
+  });
 }
 
 function chipCounts() {
-  const counts = { all: CHANNELS.length, favs: loadJSON(LS_FAV, []).length, pinned: loadJSON(LS_PIN, []).length, other: 0 };
+  const counts = {
+    all: CHANNELS.length,
+    favs: loadJSON(LS_FAV, []).length,
+    pinned: CHANNELS.filter((c) => c.isPinned).length,
+    other: 0,
+  };
   CATEGORY_DEFS.forEach((d) => (counts[d.key] = 0));
   CHANNELS.forEach((c) => { counts[c.category] = (counts[c.category] || 0) + 1; });
   return counts;
@@ -293,6 +310,28 @@ function renderChipBar() {
   bar.querySelectorAll(".chip").forEach((btn) => {
     btn.addEventListener("click", () => setChip(btn.dataset.key));
   });
+  updateChipScrollThumb();
+}
+
+// ── thin scroll indicator under the category chip bar ──
+function updateChipScrollThumb() {
+  const bar = $("#chipBar");
+  const thumb = $("#chipScrollThumb");
+  if (!bar || !thumb) return;
+  const scrollable = bar.scrollWidth - bar.clientWidth;
+  if (scrollable <= 2) { thumb.style.width = "100%"; thumb.style.transform = "translateX(0)"; return; }
+  const thumbPct = Math.max(12, (bar.clientWidth / bar.scrollWidth) * 100);
+  const travelPct = 100 - thumbPct;
+  const scrolledFrac = bar.scrollLeft / scrollable;
+  thumb.style.width = thumbPct + "%";
+  thumb.style.transform = `translateX(${(scrolledFrac * travelPct * bar.clientWidth) / 100}px)`;
+}
+
+function setupChipScrollIndicator() {
+  const bar = $("#chipBar");
+  if (!bar) return;
+  bar.addEventListener("scroll", updateChipScrollThumb, { passive: true });
+  window.addEventListener("resize", updateChipScrollThumb);
 }
 
 function setChip(key) {
@@ -311,9 +350,7 @@ function channelCard(chan) {
   card.dataset.id = chan.id;
 
   const favs = loadJSON(LS_FAV, []);
-  const pins = loadJSON(LS_PIN, []);
   const isFav = favs.includes(chan.id);
-  const isPinned = pins.includes(chan.id);
 
   const badgeHtml = chan.isOff
     ? `<span class="chan-badge chan-badge-off">বন্ধ</span>`
@@ -321,11 +358,16 @@ function channelCard(chan) {
     ? `<span class="chan-badge chan-badge-new">NEW</span>`
     : "";
 
+  const statusIcon = chan.isOff
+    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M8.5 8.5l7 7" stroke-linecap="round"/></svg>`
+    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v6" stroke-linecap="round"/><path d="M7.5 6.5a7 7 0 1 0 9 0" stroke-linecap="round"/></svg>`;
+
   card.innerHTML = `
-    <button class="chan-pin ${isPinned ? "on" : ""}" aria-label="পিন" data-id="${chan.id}">📌</button>
+    ${chan.isPinned ? `<span class="chan-pin-mark" title="Admin Pinned">📌</span>` : ""}
     <button class="chan-fav ${isFav ? "on" : ""}" aria-label="প্রিয়" data-id="${chan.id}">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-10.2-9.2C.3 8.7 1.8 5 5.4 4.3c2-.4 3.9.5 5 2.2l1.6 2.4 1.6-2.4c1.1-1.7 3-2.6 5-2.2 3.6.7 5.1 4.4 3.6 7.5C19.5 16.4 12 21 12 21z"/></svg>
     </button>
+    <span class="chan-status ${chan.isOff ? "status-off" : "status-on"}" title="${chan.isOff ? "বন্ধ" : "চালু আছে"}">${statusIcon}</span>
     <div class="chan-icon-box">
       ${badgeHtml}
       ${
@@ -338,7 +380,7 @@ function channelCard(chan) {
   `;
 
   card.addEventListener("click", (e) => {
-    if (e.target.closest(".chan-fav") || e.target.closest(".chan-pin")) return;
+    if (e.target.closest(".chan-fav")) return;
     if (chan.isOff) { toast("এই চ্যানেলটি বর্তমানে বন্ধ আছে"); return; }
     openPlayer(chan);
   });
@@ -349,14 +391,6 @@ function channelCard(chan) {
     e.currentTarget.classList.toggle("on");
     renderChipBar();
     if (currentChip === "favs") applyFilters();
-  });
-
-  card.querySelector(".chan-pin").addEventListener("click", (e) => {
-    e.stopPropagation();
-    togglePin(chan.id);
-    e.currentTarget.classList.toggle("on");
-    renderChipBar();
-    if (currentChip === "pinned") applyFilters();
   });
 
   return card;
@@ -418,8 +452,7 @@ function applyFilters() {
     const favs = loadJSON(LS_FAV, []);
     list = favs.map((id) => CHANNELS.find((c) => c.id === id)).filter(Boolean);
   } else if (currentChip === "pinned") {
-    const pins = loadJSON(LS_PIN, []);
-    list = pins.map((id) => CHANNELS.find((c) => c.id === id)).filter(Boolean);
+    list = CHANNELS.filter((c) => c.isPinned);
   } else {
     list = CHANNELS.filter((c) => c.category === currentChip);
   }
@@ -430,17 +463,10 @@ function applyFilters() {
 
   const emptyText = $("#emptyStateText");
   if (currentChip === "favs") emptyText.textContent = "এখনো কোনো প্রিয় চ্যানেল নেই — হার্ট আইকনে ক্লিক করে যোগ করো";
-  else if (currentChip === "pinned") emptyText.textContent = "এখনো কোনো পিন করা চ্যানেল নেই — 📌 আইকনে ক্লিক করে যোগ করো";
+  else if (currentChip === "pinned") emptyText.textContent = "এখনো কোনো পিন করা চ্যানেল নেই";
   else emptyText.textContent = "কোনো চ্যানেল পাওয়া যায়নি";
 
   renderGrid(list);
-}
-
-function togglePin(id) {
-  let pins = loadJSON(LS_PIN, []);
-  if (pins.includes(id)) pins = pins.filter((f) => f !== id);
-  else pins.push(id);
-  saveJSON(LS_PIN, pins);
 }
 
 function toggleFav(id) {
@@ -1181,6 +1207,7 @@ async function init() {
   setupSearch();
   setupHelpDrawer();
   setupServerFilterMenu();
+  setupChipScrollIndicator();
   setupPlayerControls();
   startBSTClockEngine();
 

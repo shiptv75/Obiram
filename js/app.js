@@ -502,14 +502,6 @@ function setupHelpDrawer() {
 }
 
 // ---------- Clock ----------
-function tickClock() {
-  const el = $("#liveClock");
-  const now = new Date();
-  const h = String(now.getHours()).padStart(2, "0");
-  const m = String(now.getMinutes()).padStart(2, "0");
-  el.textContent = `${h}:${m}`;
-}
-
 // ================= PLAYER (ported 1:1 from Shamim IPTV Blogger theme) =================
 
 // ---- entry point: open a channel ----
@@ -1168,12 +1160,12 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-// ── live clock (Asia/Dhaka) above the player ──
+// ── live clock (Asia/Dhaka) in the top-right header ──
 function startBSTClockEngine() {
   function updateClock() {
     const now = new Date();
     const timeStr = now.toLocaleTimeString("en-US", { timeZone: "Asia/Dhaka", hour12: true, hour: "2-digit", minute: "2-digit", second: "2-digit" });
-    const el = $("#player-top-clock");
+    const el = $("#liveClock");
     if (el) el.textContent = timeStr;
   }
   updateClock();
@@ -1191,8 +1183,6 @@ async function init() {
   setupServerFilterMenu();
   setupPlayerControls();
   startBSTClockEngine();
-  tickClock();
-  setInterval(tickClock, 30000);
 
   setSplashProgress(20, "প্লেলিস্ট আনা হচ্ছে…");
   try {

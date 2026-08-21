@@ -55,7 +55,7 @@
         </button>
         <div id="serverFilterMenu" class="server-filter-menu"></div>
       </div>
-      <div class="live-clock" id="liveClock">--:--</div>
+      <div class="live-clock" id="liveClock">--:--:-- --</div>
     </div>
   </header>
 
@@ -69,11 +69,6 @@
     <!-- ===== FIXED PLAYER PANE (ported 1:1 from Shamim IPTV Blogger theme) ===== -->
     <div id="playerPane" class="player-pane">
       <div class="dp-player-main-card-wrapper cv-shell">
-
-        <!-- Clock bar above player -->
-        <div class="player-clock-bar">
-          <div class="clock-time" id="player-top-clock">00:00 AM</div>
-        </div>
 
         <div class="dp-player-aspect-frame" id="cv-player-frame">
           <video id="main-hybrid-video-node" playsinline="playsinline"></video>
@@ -138,21 +133,6 @@
                 <input class="cv-vol-slider" id="cv-vol-slider" max="1" min="0" oninput="cvSetVolume(this.value)" step="0.05" type="range" value="1">
               </div>
               <div class="cv-spacer"></div>
-              <div class="cv-engine-wrap">
-                <button class="cv-btn cv-engine-trigger" id="cv-engine-trigger" onclick="cvToggleEnginePanel()" title="Stream Engine">
-                  <i class="fa-solid fa-sliders"></i>
-                  <span id="cv-engine-label">Auto</span>
-                </button>
-                <div class="cv-engine-panel" id="cv-engine-panel" style="display:none">
-                  <div class="cv-engine-panel-title">Engine</div>
-                  <div class="cv-engine-btns">
-                    <button class="cv-engine-btn active" data-engine="auto" onclick="cvSetEngine('auto')">Auto</button>
-                    <button class="cv-engine-btn" data-engine="hls" onclick="cvSetEngine('hls')">HLS.js</button>
-                    <button class="cv-engine-btn" data-engine="mpegts" onclick="cvSetEngine('mpegts')">mpegts</button>
-                    <button class="cv-engine-btn" data-engine="native" onclick="cvSetEngine('native')">Native</button>
-                  </div>
-                </div>
-              </div>
               <select class="cv-quality-select" disabled="disabled" id="cv-quality-select" onchange="cvSetQuality(this.value)">
                 <option value="-1">Auto</option>
               </select>

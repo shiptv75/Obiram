@@ -276,7 +276,153 @@ function buildGroups() {
   CHANNELS.forEach((c) => {
     c.category = categorize(c);
     c.isPinned = ADMIN_PINNED_SLUGS.includes(slugify(c.name));
+    initLiveStatus(c);
   });
+}
+
+// ---------- Live status checking (accurate ON/OFF, not just playlist metadata) ----------
+// Rationale: the "off" flag from the playlist source only exists for a
+// handful of HridoyTV entries. The other two M3U sources carry no such
+// signal at all, so every channel from them would otherwise always render
+// "ON" regardless of whether the stream actually loads. To give a genuinely
+// accurate status we do a real, lightweight connectivity probe using the
+// exact same loading mechanism the player itself uses (hls.js manifest
+// fetch for .m3u8, a cancelled GET for everything else) — so the result
+// reflects whether the stream will actually play on this site, not just
+// whether the origin server is reachable in the abstract.
+const LIVE_CACHE_KEY = "obiram_stream_status";
+const LIVE_CACHE_TTL = 20 * 60 * 1000; // 20 minutes
+const LIVE_CHECK_TIMEOUT = 7000;
+const MAX_CONCURRENT_PROBES = 4;
+
+let liveStatusCache = loadJSON(LIVE_CACHE_KEY, {});
+let activeProbes = 0;
+const probeQueue = [];
+let statusObserver = null;
+
+function getCachedStatus(chan) {
+  const entry = liveStatusCache[chan.id];
+  if (entry && Date.now() - entry.ts < LIVE_CACHE_TTL) return entry.status;
+  return null;
+}
+function setCachedStatus(chan, status) {
+  liveStatusCache[chan.id] = { status, ts: Date.now() };
+  saveJSON(LIVE_CACHE_KEY, liveStatusCache);
+}
+
+// Decides each channel's starting badge state before any probing happens.
+function initLiveStatus(chan) {
+  if (chan.isOff) { chan.liveStatus = "off"; return; } // source explicitly marked it down — authoritative
+  const cached = getCachedStatus(chan);
+  chan.liveStatus = cached || "checking";
+}
+
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((resolve) => setTimeout(() => resolve(false), ms)),
+  ]);
+}
+
+function probeViaHls(url) {
+  return new Promise((resolve) => {
+    if (!window.Hls || !Hls.isSupported()) { resolve(null); return; } // can't tell — fall back to fetch
+    let done = false;
+    const hls = new Hls({ manifestLoadingTimeOut: LIVE_CHECK_TIMEOUT, manifestLoadingMaxRetry: 0 });
+    const finish = (ok) => {
+      if (done) return;
+      done = true;
+      try { hls.destroy(); } catch {}
+      resolve(ok);
+    };
+    hls.on(Hls.Events.MANIFEST_PARSED, () => finish(true));
+    hls.on(Hls.Events.ERROR, (evt, data) => { if (data.fatal) finish(false); });
+    try { hls.loadSource(url); } catch { finish(false); }
+  });
+}
+
+async function probeViaFetch(url) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), LIVE_CHECK_TIMEOUT);
+  try {
+    const res = await fetch(url, { method: "GET", mode: "cors", cache: "no-store", signal: controller.signal });
+    try { res.body && res.body.cancel && res.body.cancel(); } catch {}
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function probeChannelStatus(chan) {
+  if (chan.isOff) return; // never override an authoritative source-level off
+  const url = chan.sources[0];
+  let ok = false;
+  try {
+    if (/\.m3u8(\?|$)/i.test(url)) {
+      const hlsResult = await withTimeout(probeViaHls(url), LIVE_CHECK_TIMEOUT);
+      ok = hlsResult === null ? await withTimeout(probeViaFetch(url), LIVE_CHECK_TIMEOUT) : hlsResult;
+    } else {
+      ok = await withTimeout(probeViaFetch(url), LIVE_CHECK_TIMEOUT);
+    }
+  } catch {
+    ok = false;
+  }
+  chan.liveStatus = ok ? "on" : "off";
+  setCachedStatus(chan, chan.liveStatus);
+  updateCardStatusBadge(chan);
+}
+
+function updateCardStatusBadge(chan) {
+  const card = document.querySelector(`.chan-card[data-id="${chan.id}"]`);
+  if (!card) return;
+  const badge = card.querySelector(".chan-status");
+  if (!badge) return;
+  badge.className = "chan-status " + statusClass(chan.liveStatus);
+  badge.textContent = statusText(chan.liveStatus);
+  card.classList.toggle("is-off", chan.liveStatus === "off");
+}
+
+function statusClass(status) {
+  if (status === "on") return "status-on";
+  if (status === "off") return "status-off";
+  return "status-checking";
+}
+function statusText(status) {
+  if (status === "on") return "ON";
+  if (status === "off") return "OFF";
+  return "•••";
+}
+
+function runProbeQueue() {
+  while (activeProbes < MAX_CONCURRENT_PROBES && probeQueue.length) {
+    const chan = probeQueue.shift();
+    if (chan.liveStatus !== "checking") continue;
+    activeProbes++;
+    probeChannelStatus(chan).finally(() => { activeProbes--; runProbeQueue(); });
+  }
+}
+function enqueueProbe(chan) {
+  if (chan.liveStatus !== "checking") return;
+  probeQueue.push(chan);
+  runProbeQueue();
+}
+
+function getStatusObserver() {
+  if (statusObserver) return statusObserver;
+  statusObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const chan = CHANNELS.find((c) => c.id === entry.target.dataset.id);
+        if (chan) enqueueProbe(chan);
+        statusObserver.unobserve(entry.target);
+      });
+    },
+    { rootMargin: "150px" }
+  );
+  return statusObserver;
 }
 
 function chipCounts() {
@@ -346,13 +492,13 @@ function setChip(key) {
 // ---------- Channel card ----------
 function channelCard(chan) {
   const card = document.createElement("div");
-  card.className = "chan-card" + (chan.isOff ? " is-off" : "");
+  card.className = "chan-card" + (chan.liveStatus === "off" ? " is-off" : "");
   card.dataset.id = chan.id;
 
   const favs = loadJSON(LS_FAV, []);
   const isFav = favs.includes(chan.id);
 
-  const badgeHtml = chan.isOff
+  const badgeHtml = chan.liveStatus === "off"
     ? `<span class="chan-badge chan-badge-off">বন্ধ</span>`
     : chan.isNew
     ? `<span class="chan-badge chan-badge-new">NEW</span>`
@@ -363,7 +509,7 @@ function channelCard(chan) {
     <button class="chan-fav ${isFav ? "on" : ""}" aria-label="প্রিয়" data-id="${chan.id}">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-10.2-9.2C.3 8.7 1.8 5 5.4 4.3c2-.4 3.9.5 5 2.2l1.6 2.4 1.6-2.4c1.1-1.7 3-2.6 5-2.2 3.6.7 5.1 4.4 3.6 7.5C19.5 16.4 12 21 12 21z"/></svg>
     </button>
-    <span class="chan-status ${chan.isOff ? "status-off" : "status-on"}" title="${chan.isOff ? "বন্ধ" : "চালু আছে"}">${chan.isOff ? "OFF" : "ON"}</span>
+    <span class="chan-status ${statusClass(chan.liveStatus)}" title="স্ট্রিম স্ট্যাটাস">${statusText(chan.liveStatus)}</span>
     <div class="chan-icon-box">
       ${badgeHtml}
       ${
@@ -377,7 +523,7 @@ function channelCard(chan) {
 
   card.addEventListener("click", (e) => {
     if (e.target.closest(".chan-fav")) return;
-    if (chan.isOff) { toast("এই চ্যানেলটি বর্তমানে বন্ধ আছে"); return; }
+    if (chan.liveStatus === "off") { toast("এই চ্যানেলটি এখন চালু করা যাচ্ছে না"); return; }
     openPlayer(chan);
   });
 
@@ -388,6 +534,8 @@ function channelCard(chan) {
     renderChipBar();
     if (currentChip === "favs") applyFilters();
   });
+
+  if (chan.liveStatus === "checking") getStatusObserver().observe(card);
 
   return card;
 }

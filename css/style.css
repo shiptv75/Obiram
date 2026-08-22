@@ -394,8 +394,7 @@ a{ color: inherit; text-decoration: none; }
 .icon-grid .chan-badge{ font-size:7.5px; padding: 1px 5px; bottom:4px; left:4px; }
 .icon-grid .chan-fav{ width:19px; height:19px; top:4px; left:4px; }
 .icon-grid .chan-fav svg{ width:11px; height:11px; }
-.icon-grid .chan-status{ width:16px; height:16px; top:4px; right:4px; }
-.icon-grid .chan-status svg{ width:9px; height:9px; }
+.icon-grid .chan-status{ top:4px; right:4px; font-size:7.5px; padding: 1px 5px; }
 .icon-grid .chan-pin-mark{ font-size:10px; top:4px; left:4px; }
 
 .chan-card{
@@ -417,14 +416,14 @@ a{ color: inherit; text-decoration: none; }
 .chan-icon-box{
   position:relative;
   width:100%; aspect-ratio: 1; border-radius: var(--r-md);
-  background: var(--surface-2); border:1px solid var(--line);
+  background: #ffffff; border:1px solid var(--line);
   display:flex; align-items:center; justify-content:center;
   padding: 6%; overflow:hidden;
 }
 .chan-icon-box img{ width:100%; height:100%; object-fit:contain; }
 .chan-logo-fallback{
-  font-family: var(--font-display); font-weight:700; font-size:15px; color: var(--muted);
-  width:100%; text-align:center;
+  font-family: var(--font-display); font-weight:700; font-size:13px; color: var(--sig);
+  width:100%; text-align:center; line-height:1.25; padding:4px;
 }
 .chan-name{
   font-size:12.5px; font-weight:600; text-align:center; line-height:1.3;
@@ -445,13 +444,12 @@ a{ color: inherit; text-decoration: none; }
 .chan-fav.on{ color: var(--gold); }
 .chan-fav svg{ width:15px; height:15px; }
 .chan-status{
-  position:absolute; top:8px; right:8px; width:22px; height:22px; z-index:3;
-  display:flex; align-items:center; justify-content:center;
-  border-radius:50%; background: rgba(0,0,0,.25);
+  position:absolute; top:6px; right:6px; z-index:3;
+  font-size:9px; font-weight:800; letter-spacing:.4px; padding: 2px 7px; border-radius:6px;
+  font-family: var(--font-mono); text-transform:uppercase;
 }
-.chan-status svg{ width:12px; height:12px; }
-.chan-status.status-on{ color: var(--glow); }
-.chan-status.status-off{ color: var(--danger); }
+.chan-status.status-on{ background: var(--glow); color:#04170c; box-shadow: 0 0 10px rgba(34,197,94,.6); }
+.chan-status.status-off{ background: var(--danger); color:#fff; }
 .chan-pin-mark{
   position:absolute; top:8px; left:8px; z-index:2; color: var(--gold); font-size:12px;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
@@ -477,8 +475,6 @@ a{ color: inherit; text-decoration: none; }
 .player-pane{
   position: sticky; top: 121px;
   flex: 1 1 auto; min-width:0;
-  max-height: calc(100vh - 137px);
-  overflow-y:auto;
 }
 .cv-shell{
   width:100%; margin:0;

@@ -358,16 +358,12 @@ function channelCard(chan) {
     ? `<span class="chan-badge chan-badge-new">NEW</span>`
     : "";
 
-  const statusIcon = chan.isOff
-    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M8.5 8.5l7 7" stroke-linecap="round"/></svg>`
-    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v6" stroke-linecap="round"/><path d="M7.5 6.5a7 7 0 1 0 9 0" stroke-linecap="round"/></svg>`;
-
   card.innerHTML = `
     ${chan.isPinned ? `<span class="chan-pin-mark" title="Admin Pinned">📌</span>` : ""}
     <button class="chan-fav ${isFav ? "on" : ""}" aria-label="প্রিয়" data-id="${chan.id}">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-10.2-9.2C.3 8.7 1.8 5 5.4 4.3c2-.4 3.9.5 5 2.2l1.6 2.4 1.6-2.4c1.1-1.7 3-2.6 5-2.2 3.6.7 5.1 4.4 3.6 7.5C19.5 16.4 12 21 12 21z"/></svg>
     </button>
-    <span class="chan-status ${chan.isOff ? "status-off" : "status-on"}" title="${chan.isOff ? "বন্ধ" : "চালু আছে"}">${statusIcon}</span>
+    <span class="chan-status ${chan.isOff ? "status-off" : "status-on"}" title="${chan.isOff ? "বন্ধ" : "চালু আছে"}">${chan.isOff ? "OFF" : "ON"}</span>
     <div class="chan-icon-box">
       ${badgeHtml}
       ${

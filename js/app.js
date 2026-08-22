@@ -125,6 +125,11 @@ function parseSingleSourceRaw(text) {
 // single card with a unified sources[] list, a set of contributing
 // sourceTags (for the "সার্ভার" filter), a NEW badge if any source flags it,
 // and an "off" badge only if every contributing source flags it off.
+// Merges by channel NAME only (not name+group) — group labels are
+// inconsistent across sources (e.g. "Banglavision" is tagged "Bangla" on
+// SHIPTV but "Bangladeshi" on FAST-IPTV), so keying on both would wrongly
+// split the same channel into duplicate cards. The most common group among
+// contributing sources is kept as the canonical one for categorization.
 function mergeAllChannels(sourceResults) {
   const merged = new Map();
   const order = [];
@@ -133,7 +138,7 @@ function mergeAllChannels(sourceResults) {
     if (!text) return;
     const rawEntries = parseSingleSourceRaw(text);
     rawEntries.forEach((entry) => {
-      const key = slugify(entry.name) + "|" + slugify(entry.group);
+      const key = slugify(entry.name);
       if (!merged.has(key)) {
         merged.set(key, {
           id: key,
@@ -145,6 +150,7 @@ function mergeAllChannels(sourceResults) {
           isNew: false,
           _offSources: new Set(),
           _allSources: new Set(),
+          _groupVotes: new Map(),
         });
         order.push(key);
       }
@@ -155,14 +161,20 @@ function mergeAllChannels(sourceResults) {
       chan._allSources.add(source);
       if (entry.isNew) chan.isNew = true;
       if (entry.isOff) chan._offSources.add(source);
+      chan._groupVotes.set(entry.group, (chan._groupVotes.get(entry.group) || 0) + 1);
     });
   });
 
   return order.map((k) => {
     const chan = merged.get(k);
     chan.isOff = chan._offSources.size > 0 && chan._offSources.size === chan._allSources.size;
+    // pick whichever group label was seen most often across contributing sources
+    let bestGroup = chan.group, bestCount = -1;
+    chan._groupVotes.forEach((count, group) => { if (count > bestCount) { bestCount = count; bestGroup = group; } });
+    chan.group = bestGroup;
     delete chan._offSources;
     delete chan._allSources;
+    delete chan._groupVotes;
     return chan;
   });
 }
@@ -355,19 +367,29 @@ async function probeViaFetch(url) {
   }
 }
 
-async function probeChannelStatus(chan) {
-  if (chan.isOff) return; // never override an authoritative source-level off
-  const url = chan.sources[0];
-  let ok = false;
+// Tries every merged source URL in order (not just the first). This is the
+// key fix for "dead on one source, alive on another": since a channel card
+// now bundles all sources together, the badge should read ON as long as at
+// least one of them actually plays — matching what the server-switch
+// dropdown in the player can already fall back to.
+async function probeOneUrl(url) {
   try {
     if (/\.m3u8(\?|$)/i.test(url)) {
       const hlsResult = await withTimeout(probeViaHls(url), LIVE_CHECK_TIMEOUT);
-      ok = hlsResult === null ? await withTimeout(probeViaFetch(url), LIVE_CHECK_TIMEOUT) : hlsResult;
-    } else {
-      ok = await withTimeout(probeViaFetch(url), LIVE_CHECK_TIMEOUT);
+      return hlsResult === null ? await withTimeout(probeViaFetch(url), LIVE_CHECK_TIMEOUT) : hlsResult;
     }
+    return await withTimeout(probeViaFetch(url), LIVE_CHECK_TIMEOUT);
   } catch {
-    ok = false;
+    return false;
+  }
+}
+
+async function probeChannelStatus(chan) {
+  if (chan.isOff) return; // never override an authoritative source-level off
+  let ok = false;
+  for (const url of chan.sources) {
+    ok = await probeOneUrl(url);
+    if (ok) break; // first working source is enough to mark the whole channel ON
   }
   chan.liveStatus = ok ? "on" : "off";
   setCachedStatus(chan, chan.liveStatus);

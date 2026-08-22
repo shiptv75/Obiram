@@ -4,11 +4,11 @@
 
 const M3U_URL = "https://raw.githubusercontent.com/shiptv75/SHIPTV/main/playlist.m3u";
 const M3U_URL_2 = "https://raw.githubusercontent.com/ahan443/FAST-IPTV/refs/heads/main/z.m3u";
-const JSON_PLAYLIST_URL = "https://raw.githubusercontent.com/hossainhridoyx/HridoyTV_Server/refs/heads/main/channels.json";
+const JSON_PLAYLIST_URL = "";
 const M3U_SOURCES = [
   { url: M3U_URL, type: "m3u", source: "SHIPTV" },
-  { url: M3U_URL_2, type: "m3u", source: "FAST-IPTV" },
-  { url: JSON_PLAYLIST_URL, type: "json", source: "HridoyTV" },
+  { url: M3U_URL_2, type: "m3u", source: "Z Playlist" },
+  { url: JSON_PLAYLIST_URL, type: "json", source: "" },
 ];
 const SOURCE_NAMES = M3U_SOURCES.map((s) => s.source);
 const CORS_PROXIES = [

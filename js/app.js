@@ -1399,3 +1399,36 @@ async function init() {
 }
 
 document.addEventListener("DOMContentLoaded", init);
+
+// ==========================================
+// SYNC CHANNEL PANE HEIGHT WITH PLAYER PANE
+// ==========================================
+function syncChannelPaneHeight() {
+  const playerPane = document.getElementById('playerPane');
+  const channelPane = document.querySelector('.channel-pane');
+
+  if (window.innerWidth >= 992 && playerPane && channelPane) {
+    // প্লেয়ারের মোট হাইট (ফুটার সহ) নিয়ে রাইট সাইডবারে সেট করা
+    const playerHeight = playerPane.offsetHeight;
+    channelPane.style.height = `${playerHeight}px`;
+    channelPane.style.maxHeight = `${playerHeight}px`;
+  } else if (channelPane) {
+    // মোবাইলে হাইট রিমুভ রাখা
+    channelPane.style.height = 'auto';
+    channelPane.style.maxHeight = 'none';
+  }
+}
+
+// পেজ লোড এবং উইন্ডো রিসাইজ হলে সিঙ্ক হবে
+window.addEventListener('load', syncChannelPaneHeight);
+window.addEventListener('resize', syncChannelPaneHeight);
+
+// প্লেয়ারের সাইজ পরিবর্তন হলেও নিজে থেকেই অ্যাডজাস্ট করবে
+const playerResizeObserver = new ResizeObserver(() => {
+  syncChannelPaneHeight();
+});
+
+const playerTarget = document.getElementById('playerPane');
+if (playerTarget) {
+  playerResizeObserver.observe(playerTarget);
+}

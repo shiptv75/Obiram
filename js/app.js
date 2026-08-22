@@ -1,5 +1,5 @@
 // ============================================================
-// OBIRAM TV — app.js
+// SHAMIM IPTV — app.js
 // ============================================================
 
 const M3U_URL = "https://raw.githubusercontent.com/shiptv75/SHIPTV/main/playlist.m3u";
@@ -708,7 +708,7 @@ function playChannel(ch) {
   const titleEl = $("#player-channel-title");
   if (titleEl) titleEl.textContent = ch.name;
   const statusEl = $("#player-channel-status");
-  if (statusEl) statusEl.innerHTML = `▶ You're watching <strong>${ch.name}</strong> live on Obiram TV`;
+  if (statusEl) statusEl.innerHTML = `▶ You're watching <strong>${ch.name}</strong> live on Shamim IPTV`;
   const logoFrame = $("#player-logo-frame");
   if (logoFrame) {
     logoFrame.innerHTML = ch.logo

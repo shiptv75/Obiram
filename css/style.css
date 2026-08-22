@@ -685,3 +685,63 @@ a{ color: inherit; text-decoration: none; }
   .cv-btn{ padding:5px 6px; }
   .dp-meta-channel-name{ font-size:15px; }
 }
+/* ====================================================
+   DESKTOP: FIXED HEIGHT CHANNEL PANE (MATCHES PLAYER)
+   ==================================================== */
+@media (min-width: 992px) {
+  /* বডি র‍্যাপারকে গ্রিড হিসেবে সেট করা */
+  .body-wrap {
+    display: grid;
+    grid-template-columns: 1fr 380px; /* বামে প্লেয়ার, ডানে ৩৮০px চওড়া চ্যানেল সাইডবার */
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* প্লেয়ার প্যান */
+  .player-pane {
+    width: 100%;
+  }
+
+  /* রাইট চ্যানেল সাইডবার - প্লেয়ারের সমান ফিক্সড হাইট ও স্ক্রলিং */
+  .channel-pane {
+    /* প্লেয়ারের হাইট অনুযায়ী স্ক্রলিং এরিয়া */
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 8px;
+    box-sizing: border-box;
+  }
+
+  /* চ্যানেল গ্রিডের মার্জিন অ্যাডজাস্ট */
+  .channel-pane .grid {
+    margin-bottom: 0;
+  }
+
+  /* সুন্দর ও প্রিমিয়াম স্ক্রলবার ডিজাইন */
+  .channel-pane::-webkit-scrollbar {
+    width: 6px;
+  }
+  .channel-pane::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 4px;
+  }
+  .channel-pane::-webkit-scrollbar-thumb {
+    background: #0d9e3f; /* আপনার থিম কালার */
+    border-radius: 4px;
+  }
+  .channel-pane::-webkit-scrollbar-thumb:hover {
+    background: #0bb347;
+  }
+}
+
+/* মোবাইল ও ছোট ডিভাইসে ফুল নরমাল স্ক্রল থাকবে */
+@media (max-width: 991px) {
+  .body-wrap {
+    display: flex;
+    flex-direction: column;
+  }
+  .channel-pane {
+    max-height: none !important;
+    height: auto !important;
+    overflow-y: visible;
+  }
+}
